@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Generate Content — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>Generate Content</h1></div>
+      <div class="admin-content form-panel-width">
+
+        <div id="alertBox"></div>
+
+        <div class="panel">
+          <div class="field">
+            <label>Content type</label>
+            <select id="contentTypeSelect">
+              <% contentTypes.forEach(function(ct) { %>
+                <option value="<%= ct.value %>"><%= ct.label %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>What do you want written?</label>
+            <textarea id="promptInput" style="min-height:140px;" placeholder="e.g. A blog post explaining why small businesses in Ghana need regular data backups, written in our usual plain, no-hype style."></textarea>
+            <div class="hint">Describe it like you're briefing a writer. No need to write the actual content yourself -- just say what it should cover.</div>
+          </div>
+
+          <button type="button" id="generateBtn" class="btn btn-primary">Generate Draft</button>
+        </div>
+
+        <div class="panel" style="background:#fffaf0;border-color:#f3d98c;">
+          <p style="font-size:0.85rem;margin:0;">
+            Generated content is <strong>always saved as a draft</strong> — it will never be published automatically. You'll be taken to the normal edit screen to give it a look and publish it yourself when it's ready.
+          </p>
+        </div>
+
+        <% if (templates.length > 0) { %>
+          <details style="margin-top:24px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:0.9rem;color:var(--text-soft);">Advanced: generate from a saved template instead</summary>
+            <div class="panel" style="margin-top:12px;">
+              <div class="field">
+                <label>Saved template</label>
+                <select id="templateSelect">
+                  <option value="">Choose a template...</option>
+                  <% templates.forEach(function(t) { %>
+                    <option value="<%= t.content_type %>" data-placeholders="<%= t.placeholders.join(',') %>" data-name="<%= t.name %>">
+                      <%= t.content_type %> — <%= t.name %>
+                    </option>
+                  <% }); %>
+                </select>
+              </div>
+              <div id="variableFields"></div>
+              <button type="button" id="generateFromTemplateBtn" class="btn btn-outline" disabled>Generate from Template</button>
+            </div>
+          </details>
+        <% } else { %>
+          <p class="muted" style="font-size:0.85rem;margin-top:16px;">
+            Scheduled (automatic) generation needs a saved template instead of a typed prompt. <a href="/admin/ai/prompts/new">Set one up</a> if you want content to generate on a schedule.
+          </p>
+        <% } %>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function(c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    const alertBox = document.getElementById('alertBox');
+
+    async function runGenerate(body, btn, busyText, idleText) {
+      btn.disabled = true;
+      btn.textContent = busyText;
+      alertBox.innerHTML = '';
+
+      try {
+        const res = await fetch('/admin/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+            return;
+          }
+          alertBox.innerHTML = '<div class="alert alert-success">Generated successfully. <a href="/admin/ai/log">View in the generation log</a>.</div>';
+        } else {
+          alertBox.innerHTML = '<div class="alert alert-error">' + escapeHtml(data.error) + '</div>';
+        }
+      } catch (err) {
+        alertBox.innerHTML = '<div class="alert alert-error">Something went wrong: ' + escapeHtml(err.message) + '</div>';
+      }
+
+      btn.disabled = false;
+      btn.textContent = idleText;
+    }
+
+    // ---------- Quick generate (the default path) ----------
+    const contentTypeSelect = document.getElementById('contentTypeSelect');
+    const promptInput = document.getElementById('promptInput');
+    const generateBtn = document.getElementById('generateBtn');
+
+    generateBtn.addEventListener('click', function() {
+      if (!promptInput.value.trim()) {
+        alertBox.innerHTML = '<div class="alert alert-error">Type what you want generated first.</div>';
+        return;
+      }
+      runGenerate(
+        { content_type: contentTypeSelect.value, prompt: promptInput.value },
+        generateBtn, 'Generating... this can take a few seconds', 'Generate Draft'
+      );
+    });
+
+    // ---------- Advanced: saved-template path ----------
+    const templateSelect = document.getElementById('templateSelect');
+    const fieldsContainer = document.getElementById('variableFields');
+    const generateFromTemplateBtn = document.getElementById('generateFromTemplateBtn');
+
+    if (templateSelect) {
+      templateSelect.addEventListener('change', function() {
+        fieldsContainer.innerHTML = '';
+        const opt = templateSelect.options[templateSelect.selectedIndex];
+        const placeholders = (opt.dataset.placeholders || '').split(',').filter(Boolean);
+
+        if (!templateSelect.value) {
+          generateFromTemplateBtn.disabled = true;
+          return;
+        }
+
+        placeholders.forEach(function(p) {
+          const div = document.createElement('div');
+          div.className = 'field';
+          div.innerHTML = '<label>' + escapeHtml(p.replace(/_/g, ' ')) + '</label><input type="text" data-var="' + escapeHtml(p) + '" placeholder="Enter ' + escapeHtml(p.replace(/_/g, ' ')) + '...">';
+          fieldsContainer.appendChild(div);
+        });
+
+        generateFromTemplateBtn.disabled = false;
+      });
+
+      generateFromTemplateBtn.addEventListener('click', function() {
+        const contentType = templateSelect.value;
+        if (!contentType) return;
+
+        const variables = { content_type: contentType };
+        fieldsContainer.querySelectorAll('[data-var]').forEach(function(input) {
+          variables[input.dataset.var] = input.value;
+        });
+
+        runGenerate(variables, generateFromTemplateBtn, 'Generating...', 'Generate from Template');
+      });
+    }
+  </script>
+</body>
+</html>

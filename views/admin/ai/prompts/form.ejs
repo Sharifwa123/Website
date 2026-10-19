@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= template ? 'Edit Prompt Template' : 'New Prompt Template' %> — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1><%= template ? 'Edit Prompt Template' : 'New Prompt Template' %></h1></div>
+      <div class="admin-content form-panel-width">
+
+        <% if (template) { %>
+          <div class="panel" style="background:#eaf0ff;border-color:#c7d8ff;">
+            <p style="font-size:0.85rem;margin:0;">
+              Saving changes creates <strong>version <%= template.version + 1 %></strong> and makes it active — the current version (v<%= template.version %>) is kept, not overwritten, and can be restored later from the Prompt Templates list.
+            </p>
+          </div>
+        <% } %>
+
+        <form method="POST" action="<%= template ? '/admin/ai/prompts/' + template.id + '/edit' : '/admin/ai/prompts' %>">
+          <div class="panel">
+            <% if (!template) { %>
+              <div class="field">
+                <label>Content type</label>
+                <select name="content_type" required>
+                  <option value="">Choose...</option>
+                  <% contentTypes.forEach(function(ct) { %>
+                    <option value="<%= ct %>"><%= ct %></option>
+                  <% }); %>
+                </select>
+              </div>
+            <% } else { %>
+              <div class="field">
+                <label>Content type</label>
+                <input type="text" value="<%= template.content_type %>" disabled>
+                <div class="hint">Content type can't be changed after creation — create a new template instead if you need a different type.</div>
+              </div>
+            <% } %>
+
+            <div class="field">
+              <label>Template name <span class="muted">(for your own reference)</span></label>
+              <input type="text" name="name" required value="<%= template ? template.name : '' %>" placeholder="e.g. Standard blog post, Weekly news summary">
+            </div>
+
+            <div class="field">
+              <label>Prompt text</label>
+              <textarea name="template_text" required style="min-height:200px;font-family:monospace;font-size:0.88rem;" placeholder="Write a {{tone}} blog post about {{topic}} for a Ghanaian tech audience. Keep it under {{max_words}} words."><%= template ? template.template_text : '' %></textarea>
+              <div class="hint">
+                Use <code>{{placeholder}}</code> for anything you'll fill in at generation time (e.g. <code>{{topic}}</code>, <code>{{tone}}</code>). This is plain text sent to the AI provider — no HTML or code, just instructions in natural language.
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Save Template</button>
+          <a href="/admin/ai/prompts" class="btn btn-outline">Cancel</a>
+        </form>
+
+      </div>
+    </main>
+  </div>
+</body>
+</html>

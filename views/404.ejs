@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Page Not Found',
+    pageDescription: "The page you're looking for doesn't exist or may have moved.",
+    noIndex: true
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main" style="padding:80px 0;">
+    <div class="container text-center" style="max-width:520px;">
+      <span class="eyebrow"><%= t('error404.eyebrow', 'Error 404') %></span>
+      <h1><%= t('error404.heading', "This page doesn't exist") %></h1>
+      <div class="trace" style="margin-left:auto;margin-right:auto;"></div>
+      <p class="muted" style="margin-bottom:28px;">
+        <%= t('error404.body', "The page you're looking for may have been moved or removed. Try one of these instead:") %>
+      </p>
+      <div class="cta-row" style="justify-content:center;flex-wrap:wrap;">
+        <a href="/" class="btn btn-primary"><%= t('error404.home_cta', 'Back to Home') %></a>
+        <a href="/blog" class="btn btn-outline"><%= t('error404.blog_cta', 'Browse the Blog') %></a>
+        <a href="/contact" class="btn btn-outline"><%= t('error404.contact_cta', 'Contact Us') %></a>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

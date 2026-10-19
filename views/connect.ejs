@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Connect',
+    pageDescription: 'Get in touch with ' + settings.site_name + ' by phone, email or social media — based in ' + settings.contact_location + '.',
+    canonicalUrl: siteUrl + '/connect'
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main">
+    <div class="container text-center" style="max-width:600px;">
+      <span class="eyebrow"><%= t('home.connect.eyebrow', "Let's talk") %></span>
+      <h1><%= t('home.connect.heading', 'Connect with SharifTech') %></h1>
+      <div class="trace" style="margin-left:auto;margin-right:auto;"></div>
+      <p class="muted"><%= settings.about_html.replace(/<[^>]+>/g, '') %></p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container" style="max-width:600px;">
+      <div class="panel connect-info-panel" style="border-radius:14px;border:1px solid var(--line);padding:28px;">
+        <div class="stack">
+          <div class="row-between"><span class="muted"><%= t('home.connect.phone_label', 'Phone') %></span><a href="tel:<%= settings.contact_phone %>"><%= settings.contact_phone %></a></div>
+          <div class="row-between"><span class="muted"><%= t('home.connect.email_label', 'Email') %></span><a href="mailto:<%= settings.contact_email %>"><%= settings.contact_email %></a></div>
+          <div class="row-between"><span class="muted"><%= t('home.connect.location_label', 'Location') %></span><span><%= settings.contact_location %></span></div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:40px;"><%= t('home.connect.follow_heading', 'Follow us') %></h2>
+      <div class="grid grid-2">
+        <% socials.forEach(function(s) { %>
+          <a href="<%= s.url %>" target="_blank" rel="noopener" class="card" style="padding:18px;display:flex;align-items:center;gap:14px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;">
+              <%- include('partials/icon', { name: s.icon }) %>
+            </div>
+            <strong><%= s.platform %></strong>
+          </a>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

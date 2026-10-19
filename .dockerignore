@@ -1,0 +1,11 @@
+node_modules
+.env
+.env.*
+!.env.example
+.git
+server/db/*.sqlite3*
+server/db/sessions
+server/uploads/admin/*
+server/uploads/messages/*
+!server/uploads/admin/.gitkeep
+!server/uploads/messages/.gitkeep

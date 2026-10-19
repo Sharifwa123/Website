@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= notice ? 'Edit Notice' : 'New Notice' %> — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar', { active: 'notices' }) %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1><%= notice ? 'Edit Notice' : 'New Notice' %></h1></div>
+      <div class="admin-content" style="max-width:640px;">
+        <form method="POST" action="<%= notice ? '/admin/notices/' + notice.id + '/edit' : '/admin/notices' %>">
+          <div class="panel">
+            <div class="field">
+              <label>Title</label>
+              <input type="text" name="title" required value="<%= notice ? notice.title : '' %>">
+            </div>
+            <div class="field">
+              <label>Message</label>
+              <textarea name="body_html" style="min-height:140px;"><%= notice ? notice.body_html : '' %></textarea>
+            </div>
+            <div class="field">
+              <label>Priority</label>
+              <select name="priority">
+                <option value="normal" <%= notice && notice.priority === 'normal' ? 'selected' : '' %>>Normal</option>
+                <option value="important" <%= notice && notice.priority === 'important' ? 'selected' : '' %>>Important</option>
+                <option value="urgent" <%= notice && notice.priority === 'urgent' ? 'selected' : '' %>>Urgent</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Expires on <span class="muted">(optional — auto-hides after this date)</span></label>
+              <input type="date" name="expires_at" value="<%= notice && notice.expires_at ? notice.expires_at.slice(0,10) : '' %>">
+            </div>
+            <div class="field checkbox-row">
+              <input type="checkbox" name="is_pinned" id="pin" <%= notice && notice.is_pinned ? 'checked' : '' %>>
+              <label for="pin" style="margin:0;">Pin to top</label>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select name="status">
+                <option value="published" <%= notice && notice.status === 'published' ? 'selected' : '' %>>Published</option>
+                <option value="draft" <%= notice && notice.status === 'draft' ? 'selected' : '' %>>Draft</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><%= notice ? 'Save Changes' : 'Publish Notice' %></button>
+          <a href="/admin/notices" class="btn btn-outline">Cancel</a>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

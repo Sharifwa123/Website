@@ -1,0 +1,44 @@
+<a href="#main" class="skip-link"><%= t('a11y.skip_link', 'Skip to content') %></a>
+<header class="site-header">
+  <div class="inner container" style="padding-left:0;padding-right:0;">
+    <a href="/" class="brand">
+      <img src="<%= settings.logo_path ? '/uploads/' + settings.logo_path : '/static/images/logo.png' %>" alt="<%= settings.site_name %> logo">
+      <small>
+        <span class="word"><%= settings.site_name %></span>
+        <span class="tag"><%= settings.tagline %></span>
+      </small>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="/" class="<%= page === 'home' ? 'active' : '' %>"><%= t('header.nav.home', 'Home') %></a>
+      <a href="/blog" class="<%= page === 'blog' ? 'active' : '' %>"><%= t('header.nav.blog', 'Blog') %></a>
+      <a href="/notices" class="<%= page === 'notices' ? 'active' : '' %>"><%= t('header.nav.notices', 'Notices') %></a>
+      <a href="/services" class="<%= page === 'services' ? 'active' : '' %>"><%= t('header.nav.services', 'Services') %></a>
+      <a href="/about" class="<%= page === 'about' ? 'active' : '' %>"><%= t('header.nav.about', 'About') %></a>
+      <a href="/connect" class="<%= page === 'connect' ? 'active' : '' %>"><%= t('header.nav.connect', 'Connect') %></a>
+      <a href="/contact" class="<%= page === 'contact' ? 'active' : '' %>"><%= t('header.nav.contact', 'Contact') %></a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mainNav">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+<script>
+  (function() {
+    var toggle = document.getElementById('navToggle');
+    var nav = document.getElementById('mainNav');
+    if (!toggle || !nav) return;
+    toggle.addEventListener('click', function() {
+      var isOpen = nav.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    // Close the menu automatically once a link is tapped, so it doesn't stay open on navigation.
+    nav.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        nav.classList.remove('open');
+        toggle.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  })();
+</script>

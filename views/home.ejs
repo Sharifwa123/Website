@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Home',
+    pageDescription: settings.site_name + ' builds custom software, mobile apps, cybersecurity solutions and network infrastructure, and provides ICT training — based in ' + settings.contact_location + '. Read the latest posts and notices, or get in touch.',
+    canonicalUrl: siteUrl + '/'
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <%
+    // A pinned notice should always be visible, no matter which tab the visitor is on —
+    // that's the whole point of pinning one. We show the highest-priority pinned notice
+    // (urgent > important > normal) as a persistent banner above the tab bar.
+    const pinnedNotices = notices.filter(function(n) { return n.is_pinned; });
+    const priorityRank = { urgent: 3, important: 2, normal: 1 };
+    let topPinned = null;
+    pinnedNotices.forEach(function(n) {
+      if (!topPinned || priorityRank[n.priority] > priorityRank[topPinned.priority]) topPinned = n;
+    });
+  %>
+
+  <% if (topPinned) { %>
+  <div class="pinned-banner-wrap <%= topPinned.priority === 'urgent' ? 'urgent' : '' %>" id="pinnedBanner" data-notice-id="<%= topPinned.id %>" style="display:none;">
+    <div class="inner">
+      <div class="text"><strong><%= topPinned.title %></strong><span class="muted"><%- topPinned.body_html %></span></div>
+      <button class="close-pin" id="dismissPinnedBtn" aria-label="Dismiss">✕</button>
+    </div>
+  </div>
+  <script>
+    // The pinned banner should float above the page (not scroll away with it), and once
+    // dismissed it should stay dismissed for THIS specific notice -- but a newly pinned
+    // notice (different id) should still show, even if an older one was dismissed before.
+    (function() {
+      var banner = document.getElementById('pinnedBanner');
+      if (!banner) return;
+      var noticeId = banner.getAttribute('data-notice-id');
+      var dismissKey = 'dismissedPinnedNotice';
+      var dismissedId = localStorage.getItem(dismissKey);
+
+      if (dismissedId !== noticeId) {
+        banner.style.display = 'flex';
+      }
+
+      document.getElementById('dismissPinnedBtn').addEventListener('click', function() {
+        localStorage.setItem(dismissKey, noticeId);
+        banner.style.display = 'none';
+      });
+    })();
+  </script>
+  <% } %>
+
+  <section class="hero" id="main" style="padding:70px 0 60px;">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="eyebrow" style="color:var(--cyan);"><%= settings.contact_location %></div>
+        <h1><%- t.html('home.hero.heading', 'Building <span class="accent">technology</span>.<br>Building the future.') %></h1>
+        <p class="lead"><%= settings.tagline %></p>
+        <div class="cta-row">
+          <button class="btn btn-primary" onclick="showPanel('blog')"><%= t('home.hero.cta_blog', 'Read the Blog') %></button>
+          <button class="btn btn-ghost-light" onclick="showPanel('contact')"><%= t('home.hero.cta_contact', 'Get In Touch') %></button>
+        </div>
+      </div>
+
+      <%
+        const heroSlides = [
+          { src: '/static/images/hero/hero-reliability.jpg', alt: 'Server racks in a data center', caption: 'Reliable systems that keep your business running.' },
+          { src: '/static/images/hero/hero-growth.jpg', alt: 'A laptop displaying business performance charts', caption: 'Technology decisions that support real business growth.' },
+          { src: '/static/images/hero/hero-cloud.jpg', alt: 'A cloud computing graphic above server hardware', caption: 'Cloud services built for speed, security and growth.' }
+        ];
+      %>
+      <div class="hero-gallery" role="region" aria-roledescription="carousel" aria-label="SHARIF TECHNOLOGIES at work">
+        <div class="hero-gallery-track" id="heroGalleryTrack">
+          <% heroSlides.forEach(function(s) { %>
+            <figure class="hero-slide">
+              <img src="<%= s.src %>" alt="<%= s.alt %>" width="1200" height="1200" loading="eager">
+              <figcaption><%= s.caption %></figcaption>
+            </figure>
+          <% }); %>
+        </div>
+        <button type="button" class="hero-gallery-arrow prev" id="heroGalleryPrev" aria-label="Previous image">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="hero-gallery-arrow next" id="heroGalleryNext" aria-label="Next image">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="hero-gallery-dots" id="heroGalleryDots" role="tablist" aria-label="Choose image"></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Hero image gallery: native scroll-snap carousel (gives real touch swipe and
+    // trackpad scroll for free) plus arrow/dot controls for mouse and keyboard users.
+    // Auto-advance is slow, pauses on hover/focus/touch, and never runs at all under
+    // prefers-reduced-motion -- this is browsing convenience, not a decorative effect.
+    (function() {
+      const track = document.getElementById('heroGalleryTrack');
+      if (!track) return;
+      const slides = Array.from(track.children);
+      const dotsWrap = document.getElementById('heroGalleryDots');
+      const prevBtn = document.getElementById('heroGalleryPrev');
+      const nextBtn = document.getElementById('heroGalleryNext');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const dots = slides.map(function(_, i) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-label', 'Image ' + (i + 1) + ' of ' + slides.length);
+        dot.addEventListener('click', function() { goTo(i); });
+        dotsWrap.appendChild(dot);
+        return dot;
+      });
+
+      function currentIndex() {
+        return Math.round(track.scrollLeft / track.clientWidth);
+      }
+
+      function setActiveDot() {
+        const i = currentIndex();
+        dots.forEach(function(d, di) {
+          d.classList.toggle('active', di === i);
+          d.setAttribute('aria-selected', di === i ? 'true' : 'false');
+        });
+      }
+
+      function goTo(i) {
+        const clamped = (i + slides.length) % slides.length;
+        track.scrollTo({ left: clamped * track.clientWidth, behavior: 'smooth' });
+      }
+
+      prevBtn.addEventListener('click', function() { goTo(currentIndex() - 1); });
+      nextBtn.addEventListener('click', function() { goTo(currentIndex() + 1); });
+      track.addEventListener('scroll', function() {
+        window.clearTimeout(track._scrollEndTimer);
+        track._scrollEndTimer = window.setTimeout(setActiveDot, 80);
+      });
+      setActiveDot();
+
+      if (!reduceMotion) {
+        const ADVANCE_MS = 6000;
+        const RESUME_AFTER_MS = 4000;
+        const gallery = track.closest('.hero-gallery');
+        let timer = null;
+        let resumeTimer = null;
+
+        function start() {
+          window.clearTimeout(resumeTimer);
+          window.clearInterval(timer);
+          timer = window.setInterval(function() { goTo(currentIndex() + 1); }, ADVANCE_MS);
+        }
+        // Pause on any interaction and always self-heal a few seconds later, rather
+        // than relying on a matching "left" event to resume: touch devices fire
+        // touchstart with no reliable equivalent of mouseleave, and a tap can also
+        // fire a synthetic mouseenter with no mouseleave ever following it. Without
+        // this, a single tap/scroll-touch anywhere on the gallery would silently
+        // stall the auto-advance forever.
+        function pauseAndScheduleResume() {
+          window.clearInterval(timer);
+          window.clearTimeout(resumeTimer);
+          resumeTimer = window.setTimeout(start, RESUME_AFTER_MS);
+        }
+
+        start();
+        ['mouseenter', 'focusin', 'touchstart', 'mouseleave', 'focusout', 'touchend', 'touchcancel'].forEach(function(evt) {
+          gallery.addEventListener(evt, pauseAndScheduleResume, { passive: true });
+        });
+      }
+    })();
+  </script>
+
+  <nav class="panel-nav" id="panelNav">
+    <div class="inner">
+      <button data-panel="home" class="active"><%= t('home.tabs.home', 'Home') %></button>
+      <button data-panel="blog"><%= t('home.tabs.blog', 'Blog') %> <span class="count"><%= posts.length %></span></button>
+      <button data-panel="notices"><%= t('home.tabs.notices', 'Notices') %> <% if (notices.length) { %><span class="count"><%= notices.length %></span><% } %></button>
+      <button data-panel="services"><%= t('home.tabs.services', 'Services') %></button>
+      <button data-panel="connect"><%= t('home.tabs.connect', 'Connect') %></button>
+      <button data-panel="contact"><%= t('home.tabs.contact', 'Contact') %></button>
+    </div>
+  </nav>
+
+  <!-- ===== HOME PANEL ===== -->
+  <div class="content-panel active" id="panel-home">
+
+    <% if (settings.homepage_intro_html && settings.homepage_intro_html.trim()) { %>
+      <div class="container settings-driven-content" style="margin-bottom:44px;">
+        <%- settings.homepage_intro_html %>
+      </div>
+    <% } %>
+
+    <% if (settings.custom_section_html && settings.custom_section_html.trim()) { %>
+      <div class="container settings-driven-content" style="margin-bottom:44px;">
+        <%- settings.custom_section_html %>
+      </div>
+    <% } %>
+
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow"><%= t('home.recent.eyebrow', 'From the blog') %></span><h2 style="margin-top:4px;"><%= t('home.recent.heading', 'Recent Posts') %></h2></div>
+        <button class="see-all" onclick="showPanel('blog')" style="background:none;border:none;cursor:pointer;font-family:inherit;"><%= t('home.recent.view_all', 'View all posts →') %></button>
+      </div>
+      <div class="trace"></div>
+
+      <% if (posts.length === 0) { %>
+        <div class="empty-state">
+          <p><%= t('home.recent.empty', 'No posts published yet. Check back soon.') %></p>
+        </div>
+      <% } else { %>
+        <div class="grid grid-3">
+          <% posts.slice(0, 3).forEach(function(p) { %>
+            <a href="/blog/<%= p.slug %>" class="card">
+              <% if (p.cover_image) { %>
+                <img class="thumb" src="/uploads/<%= p.cover_image %>" alt="<%= p.title %>">
+              <% } %>
+              <div class="content">
+                <% if (p.category_name) { %><span class="cat-tag"><%= p.category_name %></span><% } %>
+                <h3><%= p.title %></h3>
+                <p class="excerpt"><%= p.excerpt %></p>
+                <div class="meta"><span><%= new Date(p.published_at).toLocaleDateString() %></span><span><%= p.views %> views</span></div>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+
+    <%- include('partials/ad-slot', { slot: settings.adsense_slot_header }) %>
+
+    <section class="newsletter-band" style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:40px;">
+      <div class="container text-center" style="max-width:520px;">
+        <span class="eyebrow"><%= t('home.newsletter.eyebrow', 'Stay in the loop') %></span>
+        <h2 style="margin-top:4px;"><%= t('home.newsletter.heading', 'Get new posts & notices by email') %></h2>
+        <p class="muted" style="margin:10px 0 24px;"><%= t('home.newsletter.subtext', 'No spam — just updates from SharifTech, and you can unsubscribe anytime.') %></p>
+        <form id="heroSubscribeForm" style="display:flex;gap:10px;max-width:360px;margin:0 auto;">
+          <input type="email" name="email" required placeholder="<%= t('home.newsletter.email_placeholder', 'you@example.com') %>">
+          <button type="submit" class="btn btn-primary"><%= t('home.newsletter.subscribe_btn', 'Subscribe') %></button>
+        </form>
+        <div id="heroSubscribeMsg" style="font-size:0.85rem;margin-top:10px;"></div>
+        <p class="muted" style="font-size:0.75rem;margin-top:10px;">
+          <%= t('home.newsletter.privacy_prefix', 'By subscribing, you agree to our') %> <a href="/privacy-policy"><%= t('home.newsletter.privacy_link', 'Privacy Policy') %></a>.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== BLOG PANEL ===== -->
+  <div class="content-panel" id="panel-blog">
+    <div class="container">
+      <span class="eyebrow"><%= t('home.blogtab.eyebrow', 'Insights & Updates') %></span>
+      <h2><%= t('home.blogtab.heading', 'The SharifTech Blog') %></h2>
+      <div class="trace"></div>
+
+      <% if (posts.length === 0) { %>
+        <div class="empty-state">
+          <p><%= t('home.blogtab.empty', 'No posts published yet. Check back soon.') %></p>
+        </div>
+      <% } else { %>
+        <div class="grid grid-3">
+          <% posts.forEach(function(p) { %>
+            <a href="/blog/<%= p.slug %>" class="card">
+              <% if (p.cover_image) { %>
+                <img class="thumb" src="/uploads/<%= p.cover_image %>" alt="<%= p.title %>">
+              <% } %>
+              <div class="content">
+                <% if (p.category_name) { %><span class="cat-tag"><%= p.category_name %></span><% } %>
+                <h3><%= p.title %></h3>
+                <p class="excerpt"><%= p.excerpt %></p>
+                <div class="meta"><span><%= new Date(p.published_at).toLocaleDateString() %></span><span><%= p.views %> views</span></div>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+        <div class="text-center" style="margin-top:32px;">
+          <a href="/blog" class="btn btn-outline"><%= t('home.blogtab.browse_more', 'Browse full blog & search →') %></a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ===== NOTICES PANEL ===== -->
+  <div class="content-panel" id="panel-notices">
+    <div class="container" style="max-width:760px;">
+      <span class="eyebrow"><%= t('home.noticestab.eyebrow', 'Announcements') %></span>
+      <h2><%= t('home.noticestab.heading', 'Notices') %></h2>
+      <div class="trace"></div>
+
+      <% if (notices.length === 0) { %>
+        <div class="empty-state">
+          <p><%= t('home.noticestab.empty', 'No active notices right now.') %></p>
+        </div>
+      <% } else { %>
+        <div class="stack">
+          <% notices.forEach(function(n) { %>
+            <div class="notice-banner <%= n.priority === 'urgent' ? 'urgent' : '' %>">
+              <span class="badge"><%= n.priority %></span>
+              <div>
+                <div class="title"><%= n.title %></div>
+                <div class="body"><%- n.body_html %></div>
+                <div class="muted" style="font-size:0.78rem;margin-top:6px;"><%= t('home.noticestab.posted_prefix', 'Posted') %> <%= new Date(n.created_at).toLocaleDateString() %></div>
+              </div>
+              <% if (n.is_pinned) { %><span class="pin">Pinned</span><% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ===== SERVICES PANEL ===== -->
+  <div class="content-panel" id="panel-services">
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow"><%= t('home.services.eyebrow', 'What we do') %></span><h2 style="margin-top:4px;"><%= t('home.services.heading', 'Services') %></h2></div>
+        <a href="/services" class="see-all"><%= t('home.services.view_all', 'View all services →') %></a>
+      </div>
+      <div class="trace"></div>
+
+      <% if (categories.length === 0) { %>
+        <div class="empty-state"><p><%= t('home.services.empty', 'Services will be listed here soon.') %></p></div>
+      <% } else { %>
+        <div class="grid grid-3">
+          <% categories.filter(function(c) { return c.show_on_services; }).forEach(function(c) { %>
+            <a href="/services#<%= c.slug %>" class="card">
+              <div class="content">
+                <h3 style="font-size:1.1rem;"><%= c.name %></h3>
+                <p class="excerpt"><%= t('home.services.card_cta', 'See what this covers →') %></p>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- ===== CONNECT PANEL ===== -->
+  <div class="content-panel" id="panel-connect">
+    <div class="container text-center" style="max-width:600px;">
+      <span class="eyebrow"><%= t('home.connect.eyebrow', "Let's talk") %></span>
+      <h2><%= t('home.connect.heading', 'Connect with SharifTech') %></h2>
+      <div class="trace" style="margin-left:auto;margin-right:auto;"></div>
+      <p class="muted"><%= settings.about_html.replace(/<[^>]+>/g, '') %></p>
+    </div>
+    <div class="container" style="max-width:600px;">
+      <div class="panel connect-info-panel" style="border-radius:14px;border:1px solid var(--line);padding:28px;">
+        <div class="stack">
+          <div class="row-between"><span class="muted"><%= t('home.connect.phone_label', 'Phone') %></span><a href="tel:<%= settings.contact_phone %>"><%= settings.contact_phone %></a></div>
+          <div class="row-between"><span class="muted"><%= t('home.connect.email_label', 'Email') %></span><a href="mailto:<%= settings.contact_email %>"><%= settings.contact_email %></a></div>
+          <div class="row-between"><span class="muted"><%= t('home.connect.location_label', 'Location') %></span><span><%= settings.contact_location %></span></div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:40px;"><%= t('home.connect.follow_heading', 'Follow us') %></h3>
+      <div class="grid grid-2">
+        <% socials.forEach(function(s) { %>
+          <a href="<%= s.url %>" target="_blank" rel="noopener" class="card" style="padding:18px;display:flex;align-items:center;gap:14px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;">
+              <%- include('partials/icon', { name: s.icon }) %>
+            </div>
+            <strong><%= s.platform %></strong>
+          </a>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTACT PANEL ===== -->
+  <div class="content-panel" id="panel-contact">
+    <div class="container" style="max-width:600px;">
+      <span class="eyebrow"><%= t('home.contact.eyebrow', "We're here to help") %></span>
+      <h2><%= t('home.contact.heading', 'Contact & Support') %></h2>
+      <div class="trace"></div>
+      <p class="muted" style="margin-bottom:24px;">
+        <%= t('home.contact.subtext', 'Questions, feedback, or an issue to report — send us a message below. You can attach one image if it helps explain your message.') %>
+      </p>
+
+      <div id="alertBox"></div>
+
+      <form id="contactForm" enctype="multipart/form-data">
+        <div class="field">
+          <label><%= t('home.contact.name_label', 'Your name') %></label>
+          <input type="text" name="name" required maxlength="120">
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.email_label', 'Your email') %></label>
+          <input type="email" name="email" required maxlength="160">
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.subject_label', 'Subject') %></label>
+          <input type="text" name="subject" maxlength="200" placeholder="<%= t('home.contact.subject_placeholder', 'What is this about?') %>">
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.message_label', 'Message') %></label>
+          <textarea name="body" required maxlength="5000" style="min-height:150px;font-family:'Inter';" placeholder="<%= t('home.contact.message_placeholder', "Tell us what's going on...") %>"></textarea>
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.attach_label', 'Attach an image') %> <span class="muted">(<%= t('home.contact.attach_hint', 'optional, max 5MB') %>)</span></label>
+          <div class="file-drop" id="dropZone">
+            <div class="icon"><%- include('partials/icon', { name: 'upload', color: 'var(--text-soft)' }) %></div>
+            <div><%= t('home.contact.dropzone_text', 'Click to choose an image, or drag one here') %></div>
+            <div class="filename" id="filenameLabel"></div>
+          </div>
+          <input type="file" name="attachment" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn"><%= t('home.contact.submit_btn', 'Send Message') %></button>
+        <p class="muted" style="font-size:0.8rem;margin-top:12px;">
+          <%= t('home.contact.agree_prefix', 'By submitting this form, you agree to our') %> <a href="/privacy-policy"><%= t('home.contact.privacy_link', 'Privacy Policy') %></a> <%= t('home.contact.agree_and', 'and') %> <a href="/terms-of-service"><%= t('home.contact.terms_link', 'Terms of Service') %></a>.
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    // The submit-button label is read from the server-rendered value above, rather
+    // than hardcoded again here, so an admin-edited label stays consistent through
+    // the button's disable/re-enable cycle during form submission.
+    const CONTACT_SUBMIT_LABEL = <%- JSON.stringify(t('home.contact.submit_btn', 'Send Message')) %>;
+    const SUBSCRIBE_BTN_LABEL = <%- JSON.stringify(t('home.newsletter.subscribe_btn', 'Subscribe')) %>;
+    const SENDING_LABEL = <%- JSON.stringify(t('common.sending', 'Sending…')) %>;
+    const GENERIC_ERROR = <%- JSON.stringify(t('common.generic_error', 'Something went wrong. Please try again.')) %>;
+
+    // ---------- Tab-panel disclosure logic ----------
+    function showPanel(name) {
+      document.querySelectorAll('.content-panel').forEach(function(p) { p.classList.remove('active'); });
+      document.querySelectorAll('[data-panel]').forEach(function(b) { b.classList.remove('active'); });
+      var panel = document.getElementById('panel-' + name);
+      var btn = document.querySelector('[data-panel="' + name + '"]');
+      if (panel) panel.classList.add('active');
+      if (btn) btn.classList.add('active');
+      document.getElementById('panelNav').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', name === 'home' ? '/' : '/#' + name);
+    }
+    document.querySelectorAll('[data-panel]').forEach(function(btn) {
+      btn.addEventListener('click', function() { showPanel(btn.dataset.panel); });
+    });
+    // Deep-link support: /#blog opens straight to the Blog panel.
+    if (window.location.hash) {
+      var initialPanel = window.location.hash.replace('#', '');
+      if (document.getElementById('panel-' + initialPanel)) showPanel(initialPanel);
+    }
+
+    // ---------- Newsletter subscribe (hero) ----------
+    document.getElementById('heroSubscribeForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const msgBox = document.getElementById('heroSubscribeMsg');
+      const email = form.email.value;
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = SENDING_LABEL;
+      try {
+        const res = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        msgBox.style.color = data.ok ? '#0d7a44' : '#a32c2c';
+        msgBox.textContent = data.ok ? data.message : data.error;
+        if (data.ok) form.reset();
+      } catch (err) {
+        msgBox.style.color = '#a32c2c';
+        msgBox.textContent = GENERIC_ERROR;
+      }
+      btn.disabled = false;
+      btn.textContent = SUBSCRIBE_BTN_LABEL;
+    });
+
+    // ---------- Contact form (inline, same behavior as /contact) ----------
+    (function() {
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const filenameLabel = document.getElementById('filenameLabel');
+      const form = document.getElementById('contactForm');
+      const alertBox = document.getElementById('alertBox');
+      const submitBtn = document.getElementById('submitBtn');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) filenameLabel.textContent = fileInput.files[0].name;
+      });
+      ['dragover', 'dragenter'].forEach(evt =>
+        dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); })
+      );
+      ['dragleave', 'drop'].forEach(evt =>
+        dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); })
+      );
+      dropZone.addEventListener('drop', e => {
+        if (e.dataTransfer.files[0]) {
+          fileInput.files = e.dataTransfer.files;
+          filenameLabel.textContent = e.dataTransfer.files[0].name;
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        submitBtn.textContent = SENDING_LABEL;
+        alertBox.innerHTML = '';
+
+        const fd = new FormData(form);
+        try {
+          const res = await fetch('/api/contact', { method: 'POST', body: fd });
+          const data = await res.json();
+          if (data.ok) {
+            alertBox.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            form.reset();
+            filenameLabel.textContent = '';
+          } else {
+            alertBox.innerHTML = '<div class="alert alert-error">' + data.error + '</div>';
+          }
+        } catch (err) {
+          alertBox.innerHTML = '<div class="alert alert-error">' + GENERIC_ERROR + '</div>';
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = CONTACT_SUBMIT_LABEL;
+      });
+    })();
+  </script>
+</body>
+</html>

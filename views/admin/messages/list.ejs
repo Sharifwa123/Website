@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Support Inbox — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>Support Inbox</h1></div>
+      <div class="admin-content">
+        <div class="tabs">
+          <a href="/admin/messages?status=all" class="<%= filter === 'all' ? 'active' : '' %>">All</a>
+          <a href="/admin/messages?status=new" class="<%= filter === 'new' ? 'active' : '' %>">New</a>
+          <a href="/admin/messages?status=read" class="<%= filter === 'read' ? 'active' : '' %>">Read</a>
+          <a href="/admin/messages?status=replied" class="<%= filter === 'replied' ? 'active' : '' %>">Replied</a>
+          <a href="/admin/messages?status=archived" class="<%= filter === 'archived' ? 'active' : '' %>">Archived</a>
+        </div>
+
+        <% if (messages.length === 0) { %>
+          <div class="empty-state"><div class="icon">💬</div><p>No messages here.</p></div>
+        <% } else { %>
+          <div class="thumb-list">
+            <% messages.forEach(function(m) { %>
+              <a href="/admin/messages/<%= m.id %>" class="thumb-row" style="text-decoration:none;color:inherit;">
+                <div class="thumb-sq"><%= m.status === 'new' ? '🔵' : '✉️' %></div>
+                <div>
+                  <div class="title"><%= m.subject || '(no subject)' %><% if (m.attachment_path) { %> 📎<% } %></div>
+                  <div class="sub">from <%= m.name %> (<%= m.email %>) &middot; <%= new Date(m.created_at).toLocaleString() %></div>
+                </div>
+                <div class="actions"><span class="pill pill-<%= m.status === 'new' ? 'pending' : (m.status === 'archived' ? 'draft' : 'published') %>"><%= m.status %></span></div>
+              </a>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= success ? 'Success' : 'Link Invalid' %> — SharifTech</title>
+  <link rel="icon" href="/static/images/logo.png">
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body style="background:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;">
+  <div class="text-center" style="max-width:440px;padding:40px 24px;">
+    <img src="/static/images/logo.png" alt="logo" style="width:64px;height:64px;border-radius:50%;margin:0 auto 20px;">
+    <h1 style="color:#fff;font-size:1.6rem;"><%= heading %></h1>
+    <p style="color:rgba(255,255,255,0.7);margin-bottom:24px;"><%= message %></p>
+    <a href="/" class="btn btn-primary">Back to Home</a>
+  </div>
+</body>
+</html>

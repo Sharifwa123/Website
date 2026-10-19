@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>Settings</h1></div>
+      <div class="admin-content form-panel-width">
+        <% if (saved) { %><div class="alert alert-success">Settings saved.</div><% } %>
+
+        <form method="POST" action="/admin/settings" enctype="multipart/form-data">
+          <div class="panel">
+            <h2>Site Information</h2>
+            <div class="field"><label>Site name</label><input type="text" name="site_name" value="<%= settings.site_name %>"></div>
+            <div class="field"><label>Tagline</label><input type="text" name="tagline" value="<%= settings.tagline %>"></div>
+            <div class="field">
+              <label>About text <span class="muted">(shown in the footer and the Connect page/tab — NOT the homepage intro area)</span></label>
+              <textarea name="about_html" style="min-height:100px;"><%= settings.about_html %></textarea>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Homepage Content</h2>
+            <p class="muted" style="margin-top:-4px;">These two fields render on the homepage ONLY — they never appear in the footer or Connect page. HTML and inline CSS (<code>style="..."</code>) are supported; scripts and unsafe code are automatically stripped for security.</p>
+            <div class="field">
+              <label>Homepage Introduction</label>
+              <textarea name="homepage_intro_html" style="min-height:220px;font-family:monospace;font-size:0.85rem;"><%= settings.homepage_intro_html %></textarea>
+              <div class="hint">Shown near the top of the homepage, below the hero. Use this for your main "who we are / what we offer" content.</div>
+            </div>
+            <div class="field">
+              <label>Custom Section <span class="muted">(advanced)</span></label>
+              <textarea name="custom_section_html" style="min-height:220px;font-family:monospace;font-size:0.85rem;"><%= settings.custom_section_html %></textarea>
+              <div class="hint">A free-form section for anything else you want to add to the homepage — banners, embeds, custom-styled layouts. Renders below the Homepage Introduction. Leave blank to hide it entirely.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Services Page</h2>
+            <p class="muted" style="margin-top:-4px;">Per-service descriptions are edited from Admin &gt; Categories. This is just an optional intro paragraph shown above them on <a href="/services" target="_blank">/services</a>.</p>
+            <div class="field">
+              <label>Services Introduction <span class="muted">(optional)</span></label>
+              <textarea name="services_intro_html" style="min-height:100px;"><%= settings.services_intro_html %></textarea>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Branding — Logo</h2>
+            <div class="field">
+              <label>Current logo</label>
+              <div style="display:flex;align-items:center;gap:16px;margin-top:6px;">
+                <img src="<%= settings.logo_path ? '/uploads/' + settings.logo_path : '/static/images/logo.png' %>"
+                     alt="Current logo" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid var(--line);">
+                <span class="muted" style="font-size:0.85rem;">
+                  <%= settings.logo_path ? 'Custom logo in use' : 'Using the default SharifTech logo' %>
+                </span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Upload a new logo <span class="muted">(square image works best, PNG with transparent background recommended)</span></label>
+              <input type="file" name="logo_file" accept="image/png,image/jpeg,image/webp,image/gif">
+            </div>
+            <% if (settings.logo_path) { %>
+              <div class="field checkbox-row">
+                <input type="checkbox" name="remove_logo" value="1" id="removeLogo">
+                <label for="removeLogo" style="margin:0;">Remove custom logo and revert to the default on save</label>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="panel">
+            <h2>Contact Info</h2>
+            <div class="field"><label>Phone</label><input type="text" name="contact_phone" value="<%= settings.contact_phone %>"></div>
+            <div class="field"><label>Email</label><input type="email" name="contact_email" value="<%= settings.contact_email %>"></div>
+            <div class="field"><label>Location</label><input type="text" name="contact_location" value="<%= settings.contact_location %>"></div>
+          </div>
+
+          <div class="panel">
+            <h2>Google AdSense</h2>
+            <div class="field checkbox-row">
+              <input type="checkbox" name="adsense_enabled" id="ads" <%= settings.adsense_enabled === '1' ? 'checked' : '' %>>
+              <label for="ads" style="margin:0;">Enable ads site-wide</label>
+            </div>
+            <div class="field"><label>AdSense Publisher/Client ID</label><input type="text" name="adsense_client_id" placeholder="ca-pub-XXXXXXXXXXXXXXXX" value="<%= settings.adsense_client_id %>"></div>
+            <div class="field"><label>Header ad slot ID</label><input type="text" name="adsense_slot_header" value="<%= settings.adsense_slot_header %>"></div>
+            <div class="field"><label>Sidebar ad slot ID</label><input type="text" name="adsense_slot_sidebar" value="<%= settings.adsense_slot_sidebar %>"></div>
+            <div class="field"><label>In-article ad slot ID</label><input type="text" name="adsense_slot_in_article" value="<%= settings.adsense_slot_in_article %>"></div>
+            <div class="hint">Leave the Client ID blank and ads stay off everywhere, even if "Enable ads" is checked.</div>
+          </div>
+
+          <div class="panel" style="background:#eaf0ff;border-color:#c7d8ff;">
+            <h2>Outgoing Email (SMTP)</h2>
+            <p class="muted" style="margin-top:-4px;">Newsletter delivery, subscription confirmations, and contact-form notifications all depend on SMTP being configured in your <code>.env</code> file on the server — this can't be changed from the dashboard for security reasons.</p>
+            <p style="font-size:0.85rem;">See <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code>, and <code>MAIL_FROM</code> in your <code>.env</code> file. Until these are set, emails are logged to the server console instead of being sent.</p>
+          </div>
+
+          <div class="panel">
+            <h2>Style — Colors</h2>
+            <p class="muted" style="margin-top:-4px;">
+              SHARIF TECHNOLOGIES uses one consistent visual identity site-wide — there's no
+              separate light/dark/refined theme to pick, so the brand always looks the same
+              wherever a visitor lands. These fields fine-tune that identity's colors only;
+              changes apply across the whole public site immediately after saving.
+            </p>
+
+            <div class="field">
+              <label>Primary/brand color <span class="muted">(buttons, links, headings accent)</span></label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="color"  value="<%= settings.theme_primary || '#2f6fed' %>" style="width:48px;height:42px;padding:2px;flex-shrink:0;" oninput="document.getElementById('themePrimaryText').value = this.value;">
+                <input type="text" name="theme_primary" id="themePrimaryText" value="<%= settings.theme_primary %>" placeholder="#2f6fed">
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Dark-surface accent <span class="muted">(highlights on the dark header/hero/footer only -- keep this lighter than the brand color above so it stays readable there)</span></label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="color"  value="<%= settings.theme_accent || '#7ab2ff' %>" style="width:48px;height:42px;padding:2px;flex-shrink:0;" oninput="document.getElementById('themeAccentText').value = this.value;">
+                <input type="text" name="theme_accent" id="themeAccentText" value="<%= settings.theme_accent %>" placeholder="#7ab2ff">
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Ink color <span class="muted">(header/hero/footer background, admin sidebar)</span></label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="color"  value="<%= settings.theme_ink || '#0f1726' %>" style="width:48px;height:42px;padding:2px;flex-shrink:0;" oninput="document.getElementById('themeInkText').value = this.value;">
+                <input type="text" name="theme_ink" id="themeInkText" value="<%= settings.theme_ink %>" placeholder="#0f1726">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

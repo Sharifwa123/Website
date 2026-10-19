@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%
+    // Distinct metadata per state so search engines don't see three identical
+    // pages: the plain blog index, a category filter (a real, worth-indexing
+    // topic page), and a free-text search result (thin/duplicate -- noindexed
+    // and canonicalized back to the plain index instead).
+    const activeCategory = categorySlug ? categories.find(function(c) { return c.slug === categorySlug; }) : null;
+    let blogTitle = 'Blog';
+    let blogDescription = 'Insights, updates and company news from ' + settings.site_name + ', covering software development, cybersecurity, mobile apps, networking and ICT training.';
+    let blogCanonical = siteUrl + '/blog';
+    let blogNoIndex = false;
+    if (activeCategory) {
+      blogTitle = activeCategory.name;
+      blogDescription = 'Articles and updates from ' + settings.site_name + ' on ' + activeCategory.name + '.';
+      blogCanonical = siteUrl + '/blog?category=' + encodeURIComponent(activeCategory.slug);
+    } else if (search) {
+      blogNoIndex = true;
+    }
+  %>
+  <%- include('partials/head', {
+    pageTitle: blogTitle,
+    pageDescription: blogDescription,
+    canonicalUrl: blogCanonical,
+    noIndex: blogNoIndex
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main" style="padding-bottom:0;">
+    <div class="container">
+      <% if (activeCategory) { %>
+        <nav aria-label="Breadcrumb" class="breadcrumb-trail muted" style="font-size:0.85rem;margin-bottom:10px;">
+          <a href="/">Home</a><span class="chevron" aria-hidden="true">&rsaquo;</span><a href="/blog"><%= t('home.blogtab.heading', 'Blog') %></a><span class="chevron" aria-hidden="true">&rsaquo;</span><span><%= activeCategory.name %></span>
+        </nav>
+        <script type="application/ld+json">
+        <%- JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": siteUrl + "/" },
+            { "@type": "ListItem", "position": 2, "name": "Blog", "item": siteUrl + "/blog" },
+            { "@type": "ListItem", "position": 3, "name": activeCategory.name, "item": blogCanonical }
+          ]
+        }) %>
+        </script>
+      <% } %>
+      <span class="eyebrow"><%= t('home.blogtab.eyebrow', 'Insights & Updates') %></span>
+      <h1><%= activeCategory ? activeCategory.name : t('home.blogtab.heading', 'The SharifTech Blog') %></h1>
+      <div class="trace"></div>
+
+      <form method="GET" action="/blog" style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+        <input type="text" name="q" placeholder="<%= t('blog.search_placeholder', 'Search posts...') %>" value="<%= search %>" style="max-width:280px;">
+        <select name="category" onchange="this.form.submit()" style="max-width:220px;">
+          <option value=""><%= t('blog.all_categories', 'All categories') %></option>
+          <% categories.forEach(function(c) { %>
+            <option value="<%= c.slug %>" <%= categorySlug === c.slug ? 'selected' : '' %>><%= c.name %></option>
+          <% }); %>
+        </select>
+        <button class="btn btn-outline" type="submit"><%= t('blog.filter_btn', 'Filter') %></button>
+      </form>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <% if (posts.length === 0) { %>
+        <div class="empty-state">
+          <p><%= t('blog.no_results', 'No posts match your search yet.') %></p>
+        </div>
+      <% } else { %>
+        <div class="grid grid-3">
+          <% posts.forEach(function(p) { %>
+            <a href="/blog/<%= p.slug %>" class="card">
+              <% if (p.cover_image) { %>
+                <img class="thumb" src="/uploads/<%= p.cover_image %>" alt="<%= p.title %>">
+              <% } %>
+              <div class="content">
+                <% if (p.category_name) { %><span class="cat-tag"><%= p.category_name %></span><% } %>
+                <h3><%= p.title %></h3>
+                <p class="excerpt"><%= p.excerpt %></p>
+                <div class="meta"><span><%= new Date(p.published_at).toLocaleDateString() %></span><span><%= p.views %> views</span></div>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

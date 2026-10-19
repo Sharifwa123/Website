@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Subscribers — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Subscribers</h1>
+        <a href="/admin/subscribers/export.csv" class="btn btn-outline">⬇ Export CSV</a>
+      </div>
+      <div class="admin-content">
+
+        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat-card"><div class="num"><%= counts.confirmed %></div><div class="label">Confirmed</div></div>
+          <div class="stat-card"><div class="num"><%= counts.pending %></div><div class="label">Pending Confirmation</div></div>
+          <div class="stat-card"><div class="num"><%= counts.unsubscribed %></div><div class="label">Unsubscribed</div></div>
+        </div>
+
+        <div class="panel">
+          <h2>Add a subscriber manually</h2>
+          <p class="muted" style="margin-top:-8px;font-size:0.85rem;">Adds them as already-confirmed — useful for importing an existing list. They'll still be able to unsubscribe anytime.</p>
+          <form method="POST" action="/admin/subscribers" style="display:flex;gap:10px;">
+            <input type="email" name="email" placeholder="email@example.com" required>
+            <button class="btn btn-primary">Add</button>
+          </form>
+        </div>
+
+        <div class="tabs">
+          <a href="/admin/subscribers?status=confirmed" class="<%= filter === 'confirmed' ? 'active' : '' %>">Confirmed</a>
+          <a href="/admin/subscribers?status=pending" class="<%= filter === 'pending' ? 'active' : '' %>">Pending</a>
+          <a href="/admin/subscribers?status=unsubscribed" class="<%= filter === 'unsubscribed' ? 'active' : '' %>">Unsubscribed</a>
+        </div>
+
+        <% if (subscribers.length === 0) { %>
+          <div class="empty-state"><div class="icon">📭</div><p>No subscribers in this list yet.</p></div>
+        <% } else { %>
+          <table>
+            <thead><tr><th>Email</th><th>Joined</th><th></th></tr></thead>
+            <tbody>
+              <% subscribers.forEach(function(s) { %>
+                <tr>
+                  <td><%= s.email %></td>
+                  <td class="muted"><%= new Date(s.created_at).toLocaleDateString() %></td>
+                  <td>
+                    <form method="POST" action="/admin/subscribers/<%= s.id %>/delete" onsubmit="return confirm('Remove this subscriber permanently?');">
+                      <button class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

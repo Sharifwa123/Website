@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Newsletters — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Newsletters</h1>
+        <a href="/admin/newsletters/new" class="btn btn-primary">+ New Newsletter</a>
+      </div>
+      <div class="admin-content">
+        <p class="muted" style="margin-top:-6px;">You currently have <strong><%= confirmedCount %></strong> confirmed subscriber<%= confirmedCount === 1 ? '' : 's' %> who will receive newsletters you send.</p>
+
+        <% if (newsletters.length === 0) { %>
+          <div class="empty-state"><div class="icon">📨</div><p>No newsletters yet.</p></div>
+        <% } else { %>
+          <table>
+            <thead><tr><th>Subject</th><th>Status</th><th>Recipients</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+              <% newsletters.forEach(function(n) { %>
+                <tr>
+                  <td><strong><%= n.subject %></strong></td>
+                  <td><span class="pill pill-<%= n.status === 'sent' ? 'published' : 'draft' %>"><%= n.status %></span></td>
+                  <td><%= n.status === 'sent' ? n.recipients : '—' %></td>
+                  <td class="muted"><%= n.sent_at ? new Date(n.sent_at).toLocaleDateString() : new Date(n.created_at).toLocaleDateString() %></td>
+                  <td>
+                    <div style="display:flex;gap:8px;">
+                      <a href="/admin/newsletters/<%= n.id %>/edit" class="btn btn-outline btn-sm"><%= n.status === 'sent' ? 'View' : 'Edit' %></a>
+                      <form method="POST" action="/admin/newsletters/<%= n.id %>/delete" onsubmit="return confirm('Delete this newsletter?');">
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

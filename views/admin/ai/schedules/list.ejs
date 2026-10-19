@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedules — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Scheduled Generation</h1>
+        <a href="/admin/ai/schedules/new" class="btn btn-primary">+ New Schedule</a>
+      </div>
+      <div class="admin-content">
+
+        <div class="panel" style="background:#fffaf0;border-color:#f3d98c;">
+          <p style="font-size:0.85rem;margin:0;">
+            Scheduled jobs create <strong>drafts</strong> by default — exactly like clicking "Generate" manually — unless a job has <strong>Auto-publish</strong> turned on, in which case its blog posts go live with no review. Auto-publish is opt-in per schedule, set when creating it.
+          </p>
+        </div>
+
+        <div id="tableContainer">
+          <p class="muted">Loading...</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    const container = document.getElementById('tableContainer');
+
+    function render(jobList) {
+      if (jobList.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">⏱️</div><p>No scheduled jobs yet.</p></div>';
+        return;
+      }
+
+      let html = '<table><thead><tr><th>Name</th><th>Type</th><th>Publishing</th><th>Schedule</th><th>Last Run</th><th>Status</th><th></th></tr></thead><tbody>';
+      jobList.forEach(function(j) {
+        const statusPill = j.last_run_status
+          ? '<span class="pill pill-' + (j.last_run_status === 'success' ? 'published' : 'draft') + '">' + escapeHtml(j.last_run_status) + '</span>'
+          : '<span class="muted">—</span>';
+        const publishingPill = j.auto_publish
+          ? '<span class="pill pill-published">Auto-publish</span>'
+          : '<span class="pill pill-draft">Draft only</span>';
+        html += '<tr>'
+          + '<td><strong>' + escapeHtml(j.name) + '</strong></td>'
+          + '<td>' + escapeHtml(j.content_type) + '</td>'
+          + '<td>' + publishingPill + '</td>'
+          + '<td class="muted"><code>' + escapeHtml(j.schedule_cron) + '</code></td>'
+          + '<td class="muted">' + (j.last_run_at ? escapeHtml(new Date(j.last_run_at).toLocaleString()) : 'Never') + '</td>'
+          + '<td>' + statusPill + '</td>'
+          + '<td><div style="display:flex;gap:8px;">'
+          + '<button class="btn btn-outline btn-sm" data-action="toggle" data-id="' + j.id + '">' + (j.is_active ? 'Pause' : 'Resume') + '</button>'
+          + '<button class="btn btn-danger btn-sm" data-action="delete" data-id="' + j.id + '">Delete</button>'
+          + '</div></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+      wireUpActions();
+    }
+
+    async function loadSchedules() {
+      try {
+        const res = await fetch('/admin/ai/api/schedules');
+        const data = await res.json();
+        if (!data.ok) throw new Error('Failed to load schedules');
+        render(data.jobs);
+      } catch (err) {
+        container.innerHTML = '<div class="alert alert-error">Failed to load schedules: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function wireUpActions() {
+      container.querySelectorAll('[data-action="toggle"]').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          btn.disabled = true;
+          try {
+            const res = await fetch('/admin/ai/api/schedules/' + btn.dataset.id + '/toggle', { method: 'POST' });
+            const data = await res.json();
+            if (data.ok) {
+              loadSchedules(); // reload the list data in place, no navigation
+            } else {
+              alert('Failed: ' + (data.error || 'unknown error'));
+              btn.disabled = false;
+            }
+          } catch (err) {
+            alert('Failed: ' + err.message);
+            btn.disabled = false;
+          }
+        });
+      });
+
+      container.querySelectorAll('[data-action="delete"]').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          if (!confirm('Delete this schedule?')) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch('/admin/ai/api/schedules/' + btn.dataset.id + '/delete', { method: 'POST' });
+            const data = await res.json();
+            if (data.ok) {
+              loadSchedules();
+            } else {
+              alert('Failed: ' + (data.error || 'unknown error'));
+              btn.disabled = false;
+            }
+          } catch (err) {
+            alert('Failed: ' + err.message);
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    loadSchedules();
+    setInterval(loadSchedules, 20000); // periodic refresh so last_run_at/status reflect the scheduler's activity
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<%
+// Usage: include('partials/ad-slot', { slot: settings.adsense_slot_sidebar })
+// Renders nothing at all unless the admin has switched ads on AND filled in a client ID + slot ID
+// in Admin > Settings -- so there is never a broken/empty ad box shown to visitors.
+%>
+<% if (settings.adsense_enabled === '1' && settings.adsense_client_id && slot) { %>
+  <div class="ad-slot-wrap">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="<%= settings.adsense_client_id %>"
+         data-ad-slot="<%= slot %>"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+<% } %>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Socials — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>Social Links</h1></div>
+      <div class="admin-content" style="max-width:640px;">
+        <div class="panel">
+          <h2>Add a social link</h2>
+          <form method="POST" action="/admin/socials">
+            <div class="field"><label>Platform name</label><input type="text" name="platform" placeholder="e.g. TikTok" required></div>
+            <div class="field"><label>URL</label><input type="url" name="url" placeholder="https://..." required></div>
+            <div class="field">
+              <label>Icon</label>
+              <select name="icon">
+                <option value="whatsapp">WhatsApp</option>
+                <option value="mail">Email</option>
+                <option value="facebook">Facebook</option>
+                <option value="twitter">Twitter / X</option>
+                <option value="instagram">Instagram</option>
+                <option value="youtube">YouTube</option>
+                <option value="github">GitHub</option>
+                <option value="tiktok">TikTok</option>
+                <option value="link">Generic link</option>
+              </select>
+            </div>
+            <button class="btn btn-primary">Add Link</button>
+          </form>
+        </div>
+
+        <div class="thumb-list">
+          <% socials.forEach(function(s) { %>
+            <div class="thumb-row">
+              <div class="thumb-sq"><%= s.platform.slice(0,2).toUpperCase() %></div>
+              <div>
+                <div class="title"><%= s.platform %></div>
+                <div class="sub"><%= s.url %></div>
+              </div>
+              <div class="actions">
+                <form method="POST" action="/admin/socials/<%= s.id %>/toggle">
+                  <button class="btn btn-outline btn-sm"><%= s.is_active ? 'Hide' : 'Show' %></button>
+                </form>
+                <form method="POST" action="/admin/socials/<%= s.id %>/delete" onsubmit="return confirm('Remove this link?');">
+                  <button class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

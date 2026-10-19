@@ -1,0 +1,68 @@
+<button class="admin-nav-toggle" id="adminNavToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="adminSidebar">☰</button>
+<aside class="admin-sidebar" id="adminSidebar">
+  <div class="brand-mini">
+    <img src="<%= settings && settings.logo_path ? '/uploads/' + settings.logo_path : '/static/images/logo.png' %>" alt="logo">
+    <span>SharifTech</span>
+  </div>
+  <nav class="admin-nav">
+    <a href="/admin" class="<%= active === 'dashboard' ? 'active' : '' %>">📊 Dashboard</a>
+
+    <div class="group-label">Content</div>
+    <a href="/admin/posts" class="<%= active === 'posts' ? 'active' : '' %>">📝 Blog Posts</a>
+    <a href="/admin/categories" class="<%= active === 'categories' ? 'active' : '' %>">🏷️ Categories</a>
+    <a href="/admin/notices" class="<%= active === 'notices' ? 'active' : '' %>">📢 Notices</a>
+
+    <div class="group-label">Mailing</div>
+    <a href="/admin/subscribers" class="<%= active === 'subscribers' ? 'active' : '' %>">👥 Subscribers</a>
+    <a href="/admin/newsletters" class="<%= active === 'newsletters' ? 'active' : '' %>">📨 Newsletters</a>
+    <a href="/admin/messages" class="<%= active === 'messages' ? 'active' : '' %>">
+      💬 Support Inbox
+      <% if (typeof pendingCount !== 'undefined' && pendingCount > 0) { %><span class="badge-count"><%= pendingCount %></span><% } %>
+    </a>
+
+    <div class="group-label">AI Content</div>
+    <a href="/admin/ai" class="<%= active === 'ai' ? 'active' : '' %>">🤖 AI Dashboard</a>
+    <a href="/admin/ai/generate" class="<%= active === 'ai' ? 'active' : '' %>">✨ Generate</a>
+    <a href="/admin/ai/prompts" class="<%= active === 'ai' ? 'active' : '' %>">📋 Prompts</a>
+    <a href="/admin/ai/schedules" class="<%= active === 'ai' ? 'active' : '' %>">⏱️ Schedules</a>
+    <a href="/admin/ai/log" class="<%= active === 'ai' ? 'active' : '' %>">
+      📜 Generation Log
+      <% if (typeof aiDraftCount !== 'undefined' && aiDraftCount > 0) { %><span class="badge-count"><%= aiDraftCount %></span><% } %>
+    </a>
+
+    <div class="group-label">Site</div>
+    <a href="/admin/socials" class="<%= active === 'socials' ? 'active' : '' %>">🔗 Socials</a>
+    <a href="/admin/ui-strings" class="<%= active === 'ui-strings' ? 'active' : '' %>">✏️ UI Text</a>
+    <a href="/admin/settings" class="<%= active === 'settings' ? 'active' : '' %>">⚙️ Settings</a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="/" target="_blank">🌐 View site</a>
+    <a href="/admin/change-password">🔑 Change password</a>
+    <form method="POST" action="/admin/logout">
+      <button type="submit" class="btn btn-ghost-light btn-sm" style="width:100%;justify-content:center;">Log out</button>
+    </form>
+  </div>
+</aside>
+<div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+<script>
+  (function() {
+    var toggle = document.getElementById('adminNavToggle');
+    var sidebar = document.getElementById('adminSidebar');
+    var overlay = document.getElementById('adminSidebarOverlay');
+    if (!toggle || !sidebar) return;
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+    toggle.addEventListener('click', function() {
+      var isOpen = sidebar.classList.toggle('open');
+      overlay.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    overlay.addEventListener('click', closeSidebar);
+    sidebar.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', closeSidebar);
+    });
+  })();
+</script>

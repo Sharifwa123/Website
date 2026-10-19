@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generation Log — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>Generation Log</h1></div>
+      <div class="admin-content">
+
+        <div class="panel" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field" style="margin:0;flex:1;min-width:180px;">
+            <label>Search</label>
+            <input type="text" id="searchInput" placeholder="Search type, provider, error message...">
+          </div>
+          <div class="field" style="margin:0;min-width:140px;">
+            <label>Status</label>
+            <select id="statusFilter">
+              <option value="">All</option>
+              <option value="success">Success</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;min-width:160px;">
+            <label>Content type</label>
+            <select id="typeFilter">
+              <option value="">All</option>
+              <option value="blog_post">blog_post</option>
+              <option value="newsletter">newsletter</option>
+              <option value="seo_meta">seo_meta</option>
+              <option value="social_post">social_post</option>
+              <option value="tutorial">tutorial</option>
+              <option value="announcement">announcement</option>
+              <option value="news_summary">news_summary</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="logContainer">
+          <p class="muted">Loading...</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const logContainer = document.getElementById('logContainer');
+
+    let debounceTimer = null;
+
+    async function loadLog() {
+      const params = new URLSearchParams();
+      if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
+      if (statusFilter.value) params.set('status', statusFilter.value);
+      if (typeFilter.value) params.set('content_type', typeFilter.value);
+
+      logContainer.innerHTML = '<p class="muted">Loading...</p>';
+
+      try {
+        const res = await fetch('/admin/ai/api/log?' + params.toString());
+        const data = await res.json();
+        if (!data.ok) throw new Error('Failed to load log');
+
+        if (data.entries.length === 0) {
+          logContainer.innerHTML = '<div class="empty-state"><div class="icon">📜</div><p>No matching entries.</p></div>';
+          return;
+        }
+
+        let html = '';
+        data.entries.forEach(function(e, idx) {
+          const pillClass = e.status === 'success' ? 'published' : 'draft';
+          const contentId = 'gen-content-' + idx;
+          html += '<div class="panel" style="margin-bottom:16px;">'
+            + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px;">'
+            + '<div>'
+              + '<strong style="font-size:1.05rem;">' + escapeHtml(e.content_type) + '</strong> '
+              + '<span class="pill pill-' + pillClass + '">' + escapeHtml(e.status) + '</span>'
+              + '<div class="muted" style="font-size:0.8rem;margin-top:4px;">'
+                + escapeHtml(new Date(e.created_at).toLocaleString()) + ' · '
+                + escapeHtml(e.provider) + '/' + escapeHtml(e.model) + ' · '
+                + escapeHtml(e.triggered_by)
+                + (e.tokens_used ? ' · ' + escapeHtml(e.tokens_used) + ' tokens' : '')
+              + '</div>'
+            + '</div>'
+            + (e.generated_text ? '<button type="button" class="btn btn-outline btn-sm copy-btn" data-target="' + contentId + '">📋 Copy</button>' : '')
+            + '</div>';
+
+          if (e.status === 'error') {
+            html += '<div class="alert alert-error" style="font-size:0.85rem;">' + escapeHtml(e.error_message || 'Unknown error') + '</div>';
+          }
+
+          if (e.generated_text) {
+            // The actual fix for "content should appear in a bigger box, not just logs" --
+            // a large, scrollable, readable box showing the FULL generated text, not a
+            // truncated table cell.
+            html += '<div id="' + contentId + '" style="background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:6px;max-height:400px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;font-size:0.92rem;">'
+              + escapeHtml(e.generated_text)
+              + '</div>';
+          } else if (e.status === 'success') {
+            html += '<p class="muted" style="font-size:0.82rem;">Generated before full-text logging was added -- not available for this older entry.</p>';
+          }
+
+          html += '</div>';
+        });
+        html += '<p class="muted" style="font-size:0.8rem;margin-top:16px;">Showing up to 100 matching entries.</p>';
+        logContainer.innerHTML = html;
+
+        logContainer.querySelectorAll('.copy-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            const el = document.getElementById(btn.dataset.target);
+            navigator.clipboard.writeText(el.textContent).then(function() {
+              const original = btn.textContent;
+              btn.textContent = '✓ Copied';
+              setTimeout(function() { btn.textContent = original; }, 1500);
+            });
+          });
+        });
+      } catch (err) {
+        logContainer.innerHTML = '<div class="alert alert-error">Failed to load log: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadLog, 300); // debounce so we don't fire a request per keystroke
+    });
+    statusFilter.addEventListener('change', loadLog);
+    typeFilter.addEventListener('change', loadLog);
+
+    loadLog();
+  </script>
+</body>
+</html>

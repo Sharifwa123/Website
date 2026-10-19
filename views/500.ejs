@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Something Went Wrong',
+    pageDescription: 'An unexpected error occurred. Please try again in a moment.',
+    noIndex: true
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main" style="padding:80px 0;">
+    <div class="container text-center" style="max-width:520px;">
+      <span class="eyebrow"><%= t('error500.eyebrow', 'Error 500') %></span>
+      <h1><%= t('error500.heading', 'Something went wrong') %></h1>
+      <div class="trace" style="margin-left:auto;margin-right:auto;"></div>
+      <p class="muted" style="margin-bottom:28px;">
+        <%= t('error500.body', 'This is on our end, not yours. Please try again in a moment -- if it keeps happening, let us know.') %>
+      </p>
+      <div class="cta-row" style="justify-content:center;flex-wrap:wrap;">
+        <a href="/" class="btn btn-primary"><%= t('error500.home_cta', 'Back to Home') %></a>
+        <a href="/contact" class="btn btn-outline"><%= t('error500.contact_cta', 'Contact Us') %></a>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

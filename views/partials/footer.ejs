@@ -1,0 +1,95 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="grid">
+      <div class="brand-col">
+        <div class="brand" style="margin-bottom:14px;">
+          <img src="<%= settings.logo_path ? '/uploads/' + settings.logo_path : '/static/images/logo.png' %>" alt="logo">
+          <small>
+            <span class="word"><%= settings.site_name %></span>
+            <span class="tag"><%= settings.tagline %></span>
+          </small>
+        </div>
+        <p><%- settings.about_html %></p>
+        <div class="social-row">
+          <% socials.forEach(function(s) { %>
+            <a href="<%= s.url %>" target="_blank" rel="noopener" title="<%= s.platform %>" aria-label="<%= s.platform %>">
+              <%- include('icon', { name: s.icon }) %>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+      <div>
+        <h4><%= t('footer.explore_heading', 'Explore') %></h4>
+        <a href="/about"><%= t('header.nav.about', 'About') %></a>
+        <a href="/blog"><%= t('header.nav.blog', 'Blog') %></a>
+        <a href="/notices"><%= t('header.nav.notices', 'Notices') %></a>
+        <a href="/connect"><%= t('header.nav.connect', 'Connect') %></a>
+        <a href="/contact"><%= t('footer.contact_link', 'Contact / Support') %></a>
+      </div>
+      <div>
+        <h4><%= t('footer.services_heading', 'Services') %></h4>
+        <a href="/services#web-development"><%= t('footer.service_webdev', 'Web Development') %></a>
+        <a href="/services#mobile-apps"><%= t('footer.service_mobile', 'Mobile Apps') %></a>
+        <a href="/services#cybersecurity"><%= t('footer.service_cybersecurity', 'Cybersecurity') %></a>
+        <a href="/services#networking"><%= t('footer.service_networking', 'Networking') %></a>
+        <a href="/services#ict-training"><%= t('footer.service_training', 'ICT Training') %></a>
+        <a href="/services"><%= t('footer.service_all', 'All services →') %></a>
+      </div>
+      <div>
+        <h4><%= t('footer.stay_updated_heading', 'Stay Updated') %></h4>
+        <p style="font-size:0.85rem;margin-bottom:12px;"><%= t('footer.stay_updated_subtext', 'Get new posts and notices by email.') %></p>
+        <form class="footer-subscribe" data-subscribe-form>
+          <input type="email" name="email" required placeholder="<%= t('home.newsletter.email_placeholder', 'you@example.com') %>" style="margin-bottom:8px;">
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;"><%= t('home.newsletter.subscribe_btn', 'Subscribe') %></button>
+        </form>
+        <div class="footer-subscribe-msg" style="font-size:0.8rem;margin-top:8px;"></div>
+        <p style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:8px;">
+          <%= t('home.newsletter.privacy_prefix', 'By subscribing, you agree to our') %> <a href="/privacy-policy" style="color:rgba(255,255,255,0.5);"><%= t('home.newsletter.privacy_link', 'Privacy Policy') %></a>.
+        </p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <%= new Date().getFullYear() %> <%= settings.site_name %>. <%= t('footer.rights_reserved', 'All rights reserved.') %></span>
+      <span class="footer-legal-links">
+        <a href="/privacy-policy" style="color:rgba(255,255,255,0.5);"><%= t('footer.privacy_link', 'Privacy Policy') %></a>
+        <a href="/terms-of-service" style="color:rgba(255,255,255,0.5);"><%= t('footer.terms_link', 'Terms of Service') %></a>
+        <a href="/cookie-policy" style="color:rgba(255,255,255,0.5);"><%= t('footer.cookie_link', 'Cookie Policy') %></a>
+        <a href="/copyright" style="color:rgba(255,255,255,0.5);"><%= t('footer.copyright_link', 'Copyright') %></a>
+        <a href="/admin/login" style="color:rgba(255,255,255,0.4);"><%= t('footer.admin_link', 'Admin') %></a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const FOOTER_SENDING_LABEL = <%- JSON.stringify(t('common.sending', 'Sending…')) %>;
+  const FOOTER_SUBSCRIBE_LABEL = <%- JSON.stringify(t('home.newsletter.subscribe_btn', 'Subscribe')) %>;
+  const FOOTER_GENERIC_ERROR = <%- JSON.stringify(t('common.generic_error', 'Something went wrong. Please try again.')) %>;
+
+  document.querySelectorAll('[data-subscribe-form]').forEach(function(form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const msgBox = form.parentElement.querySelector('.footer-subscribe-msg') || form.nextElementSibling;
+      const email = form.querySelector('input[name=email]').value;
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = FOOTER_SENDING_LABEL;
+      try {
+        const res = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        msgBox.style.color = data.ok ? '#3ec6ff' : '#ff9c9c';
+        msgBox.textContent = data.ok ? data.message : data.error;
+        if (data.ok) form.reset();
+      } catch (err) {
+        msgBox.style.color = '#ff9c9c';
+        msgBox.textContent = FOOTER_GENERIC_ERROR;
+      }
+      btn.disabled = false;
+      btn.textContent = FOOTER_SUBSCRIBE_LABEL;
+    });
+  });
+</script>

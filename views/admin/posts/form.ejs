@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= post ? 'Edit Post' : 'New Post' %> — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar', { active: 'posts' }) %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1><%= post ? 'Edit Post' : 'New Post' %></h1></div>
+      <div class="admin-content">
+        <form method="POST" action="<%= post ? '/admin/posts/' + post.id + '/edit' : '/admin/posts' %>" enctype="multipart/form-data">
+          <div class="panel">
+            <div class="field">
+              <label>Title</label>
+              <input type="text" name="title" required value="<%= post ? post.title : '' %>" style="font-family:var(--heading-font);font-size:1.1rem;">
+            </div>
+            <div class="field">
+              <label>Excerpt (short summary shown on listing cards)</label>
+              <textarea name="excerpt" style="min-height:70px;font-family:'Inter';"><%= post ? post.excerpt : '' %></textarea>
+            </div>
+            <div class="field">
+              <label>Category</label>
+              <select name="category_id">
+                <option value="">— None —</option>
+                <% categories.forEach(function(c) { %>
+                  <option value="<%= c.id %>" <%= post && post.category_id === c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="field">
+              <label>Cover Image <span class="muted">(optional — leave blank to keep current)</span></label>
+              <input type="file" name="cover_image" accept="image/*">
+              <% if (post && post.cover_image) { %>
+                <img src="/uploads/<%= post.cover_image %>" style="max-width:200px;border-radius:10px;margin-top:10px;">
+              <% } %>
+            </div>
+            <div class="field">
+              <label>Body <span class="muted">(HTML supported — use the toolbar-free editor below or paste formatted HTML)</span></label>
+              <textarea name="body_html" style="min-height:320px;"><%= post ? post.body_html : '' %></textarea>
+              <div class="hint">Basic tags like &lt;p&gt;, &lt;h2&gt;, &lt;img&gt;, &lt;blockquote&gt;, &lt;strong&gt; are supported. Scripts are stripped for security.</div>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select name="status">
+                <option value="draft" <%= post && post.status === 'draft' ? 'selected' : '' %>>Draft (hidden from visitors)</option>
+                <option value="published" <%= post && post.status === 'published' ? 'selected' : '' %>>Published (live on the site)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary"><%= post ? 'Save Changes' : 'Create Post' %></button>
+          <a href="/admin/posts" class="btn btn-outline">Cancel</a>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

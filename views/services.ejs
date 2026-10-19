@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Services',
+    pageDescription: 'What ' + settings.site_name + ' actually does: ' + services.map(function(s) { return s.name; }).join(', ') + '.',
+    canonicalUrl: siteUrl + '/services'
+  }) %>
+  <script type="application/ld+json">
+  <%- JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": services.map(function(s, i) {
+      return {
+        "@type": "ListItem",
+        "position": i + 1,
+        "item": {
+          "@type": "Service",
+          "name": s.name,
+          "description": s.description || undefined,
+          "provider": { "@type": "Organization", "name": settings.site_name },
+          "areaServed": settings.contact_location,
+          "url": siteUrl + "/services#" + s.slug
+        }
+      };
+    })
+  }) %>
+  </script>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main">
+    <div class="container" style="max-width:760px;">
+      <span class="eyebrow"><%= t('services.eyebrow', 'What we do') %></span>
+      <h1><%= t('services.heading', 'Services') %></h1>
+      <div class="trace"></div>
+      <% if (settings.services_intro_html && settings.services_intro_html.trim()) { %>
+        <div class="settings-driven-content"><%- settings.services_intro_html %></div>
+      <% } else { %>
+        <p class="muted"><%= t('services.default_intro', 'Software, security, networks and training -- built and taught by the people who also maintain them, not sold once and left behind.') %></p>
+      <% } %>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container" style="max-width:760px;">
+      <% if (services.length === 0) { %>
+        <div class="empty-state"><p><%= t('services.empty', 'Services will be listed here soon.') %></p></div>
+      <% } else { %>
+        <% services.forEach(function(s, i) { %>
+          <div id="<%= s.slug %>" class="service-block<% if (i > 0) { %> service-block-divider<% } %>">
+            <h2><%= s.name %></h2>
+            <% if (s.description) { %>
+              <p class="muted"><%= s.description %></p>
+            <% } %>
+            <% if (s.post_count > 0) { %>
+              <a href="/blog?category=<%= s.slug %>" class="btn btn-outline btn-sm"><%= t('services.related_posts_cta', 'Related posts') %> (<%= s.post_count %>)</a>
+            <% } %>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </section>
+
+  <section style="padding-top:0;border-top:1px solid var(--line);">
+    <div class="container text-center" style="max-width:600px;padding-top:40px;">
+      <span class="eyebrow"><%= t('services.next.eyebrow', 'Have a project in mind?') %></span>
+      <h2><%= t('services.next.heading', "Let's talk about it") %></h2>
+      <div class="trace" style="margin-left:auto;margin-right:auto;"></div>
+      <p class="muted"><%= t('services.next.body', "Tell us what you're trying to do and we'll give you a straight answer on what it actually needs.") %></p>
+      <div class="cta-row" style="justify-content:center;">
+        <a href="/contact" class="btn btn-primary"><%= t('services.next.contact_cta', 'Contact us') %></a>
+        <a href="/about" class="btn btn-outline"><%= t('services.next.about_cta', 'About us') %></a>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

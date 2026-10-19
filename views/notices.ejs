@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Notices',
+    pageDescription: 'Official announcements and updates from ' + settings.site_name + '.',
+    canonicalUrl: siteUrl + '/notices'
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main">
+    <div class="container" style="max-width:760px;">
+      <span class="eyebrow"><%= t('home.noticestab.eyebrow', 'Announcements') %></span>
+      <h1><%= t('home.noticestab.heading', 'Notices') %></h1>
+      <div class="trace"></div>
+
+      <% if (notices.length === 0) { %>
+        <div class="empty-state">
+          <p><%= t('home.noticestab.empty', 'No active notices right now.') %></p>
+        </div>
+      <% } else { %>
+        <div class="stack">
+          <% notices.forEach(function(n) { %>
+            <div class="notice-banner <%= n.priority === 'urgent' ? 'urgent' : '' %>">
+              <span class="badge"><%= n.priority %></span>
+              <div>
+                <div class="title"><%= n.title %></div>
+                <div class="body"><%- n.body_html %></div>
+                <div class="muted" style="font-size:0.78rem;margin-top:6px;"><%= t('home.noticestab.posted_prefix', 'Posted') %> <%= new Date(n.created_at).toLocaleDateString() %></div>
+              </div>
+              <% if (n.is_pinned) { %><span class="pin">Pinned</span><% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

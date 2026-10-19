@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Content — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>AI Content Dashboard</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span id="liveIndicator" style="font-size:0.78rem;color:var(--text-soft);display:flex;align-items:center;gap:6px;">
+            <span id="liveDot" style="width:8px;height:8px;border-radius:50%;background:#1fa96b;display:inline-block;"></span>
+            Live
+          </span>
+          <a href="/admin/ai/generate" class="btn btn-primary">✨ Generate Content</a>
+        </div>
+      </div>
+      <div class="admin-content">
+
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card"><div class="num" id="stat-aiDrafts">–</div><div class="label">AI Drafts Awaiting Review</div></div>
+          <div class="stat-card"><div class="num" id="stat-templates">–</div><div class="label">Active Prompt Templates</div></div>
+          <div class="stat-card"><div class="num" id="stat-scheduledJobs">–</div><div class="label">Active Schedules</div></div>
+          <div class="stat-card"><div class="num" id="stat-generationsToday">–</div><div class="label">Generations Today</div></div>
+        </div>
+
+        <div class="panel" style="background:#eaf0ff;border-color:#c7d8ff;">
+          <h2>Current Provider</h2>
+          <p style="font-size:0.9rem;">
+            Using <strong><%= currentProvider %></strong> with model <strong><%= currentModel %></strong>.
+            <a href="/admin/ai/settings">Change this</a>.
+          </p>
+          <p class="muted" style="font-size:0.82rem;margin-top:-4px;">
+            Every generated draft is reviewed by you before publishing — nothing generated here goes live automatically, whether triggered manually or by a schedule.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="row-between" style="margin-bottom:16px;">
+            <h2 style="margin:0;">Recent Activity</h2>
+            <a href="/admin/ai/log" class="btn btn-outline btn-sm">View full log</a>
+          </div>
+          <div id="recentActivityContainer">
+            <p class="muted">Loading...</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Escapes text before it's ever placed inside innerHTML -- required discipline for
+    // anything derived from the database (post titles, error messages, etc.), since
+    // those values could in principle contain HTML/script-like text (e.g. from a post
+    // title an admin pasted in) and must never be interpreted as markup.
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    async function refreshDashboard() {
+      const liveDot = document.getElementById('liveDot');
+      try {
+        const res = await fetch('/admin/ai/api/stats');
+        const data = await res.json();
+        if (!data.ok) throw new Error('Failed to load stats');
+
+        document.getElementById('stat-aiDrafts').textContent = data.stats.aiDrafts;
+        document.getElementById('stat-templates').textContent = data.stats.templates;
+        document.getElementById('stat-scheduledJobs').textContent = data.stats.scheduledJobs;
+        document.getElementById('stat-generationsToday').textContent = data.stats.generationsToday;
+
+        const container = document.getElementById('recentActivityContainer');
+        if (data.recentLog.length === 0) {
+          container.innerHTML = '<p class="muted">No generation activity yet. <a href="/admin/ai/generate">Generate your first piece of content</a>.</p>';
+        } else {
+          let html = '<table><thead><tr><th>Type</th><th>Status</th><th>Triggered By</th><th>Tokens</th><th>Date</th></tr></thead><tbody>';
+          data.recentLog.forEach(function(entry) {
+            const pillClass = entry.status === 'success' ? 'published' : 'draft';
+            html += '<tr>'
+              + '<td>' + escapeHtml(entry.content_type) + '</td>'
+              + '<td><span class="pill pill-' + pillClass + '">' + escapeHtml(entry.status) + '</span></td>'
+              + '<td class="muted">' + escapeHtml(entry.triggered_by) + '</td>'
+              + '<td class="muted">' + escapeHtml(entry.tokens_used || '—') + '</td>'
+              + '<td class="muted">' + escapeHtml(new Date(entry.created_at).toLocaleString()) + '</td>'
+              + '</tr>';
+          });
+          html += '</tbody></table>';
+          container.innerHTML = html;
+        }
+
+        liveDot.style.background = '#1fa96b';
+      } catch (err) {
+        liveDot.style.background = '#d94848';
+        console.error('Dashboard refresh failed:', err.message);
+      }
+    }
+
+    refreshDashboard();
+    setInterval(refreshDashboard, 15000); // refresh every 15 seconds, no page reload
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Notices — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Notices</h1>
+        <a href="/admin/notices/new" class="btn btn-primary">+ New Notice</a>
+      </div>
+      <div class="admin-content">
+        <% if (notices.length === 0) { %>
+          <div class="empty-state"><div class="icon">📢</div><p>No notices yet.</p></div>
+        <% } else { %>
+          <table>
+            <thead><tr><th>Title</th><th>Priority</th><th>Status</th><th>Pinned</th><th></th></tr></thead>
+            <tbody>
+              <% notices.forEach(function(n) { %>
+                <tr>
+                  <td><strong><%= n.title %></strong></td>
+                  <td><%= n.priority %></td>
+                  <td><span class="pill pill-<%= n.status === 'published' ? 'published' : 'draft' %>"><%= n.status %></span></td>
+                  <td><%= n.is_pinned ? '📌' : '—' %></td>
+                  <td>
+                    <div style="display:flex;gap:8px;">
+                      <a href="/admin/notices/<%= n.id %>/edit" class="btn btn-outline btn-sm">Edit</a>
+                      <form method="POST" action="/admin/notices/<%= n.id %>/delete" onsubmit="return confirm('Delete this notice?');">
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Text — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>UI Text</h1></div>
+      <div class="admin-content">
+
+        <div class="panel" style="background:#eaf0ff;border-color:#c7d8ff;">
+          <p style="font-size:0.88rem;margin:0;">
+            Edit the wording used across your public site — navigation labels, button
+            text, headings, and form labels. Every field falls back to its original
+            English text automatically if you clear it, so this can never leave a
+            page blank or broken. Changes apply within a few seconds of saving.
+          </p>
+        </div>
+
+        <div class="field" style="max-width:400px;">
+          <label>Search</label>
+          <input type="text" id="searchInput" placeholder="Search by text or page..." value="<%= search %>">
+        </div>
+
+        <% Object.keys(grouped).sort().forEach(function(group) { %>
+          <div class="panel ui-string-group" data-group="<%= group %>">
+            <h2 style="text-transform:capitalize;"><%= group %></h2>
+            <div class="stack">
+              <% grouped[group].forEach(function(row) { %>
+                <div class="ui-string-row" data-search-text="<%= (row.value || row.default_value).toLowerCase() %> <%= row.string_key.toLowerCase() %>" style="padding:14px 0;border-bottom:1px solid var(--line);">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+                    <label style="font-size:0.8rem;color:var(--text-soft);font-family:monospace;"><%= row.string_key %></label>
+                    <% if (row.value !== null && row.value !== '') { %>
+                      <span class="pill pill-published" style="font-size:0.7rem;">Customized</span>
+                    <% } else { %>
+                      <span class="pill pill-draft" style="font-size:0.7rem;">Default</span>
+                    <% } %>
+                  </div>
+                  <form method="POST" action="/admin/ui-strings/<%= row.id %>/save" style="display:flex;gap:8px;">
+                    <input type="text" name="value" value="<%= row.value || row.default_value %>" style="flex:1;" placeholder="<%= row.default_value %>">
+                    <button type="submit" class="btn btn-outline btn-sm">Save</button>
+                  </form>
+                  <% if (row.value !== null && row.value !== '') { %>
+                    <form method="POST" action="/admin/ui-strings/<%= row.id %>/reset" style="margin-top:6px;">
+                      <button type="submit" class="btn btn-outline btn-sm" style="font-size:0.78rem;padding:4px 10px;">↺ Reset to default: "<%= row.default_value %>"</button>
+                    </form>
+                  <% } %>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% }); %>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Client-side filter only -- searches the already-rendered rows by their current
+    // text and key, no page reload. Purely a convenience filter; saving/resetting
+    // still uses normal form submissions (deliberately simple, since edits here are
+    // infrequent one-off actions, not something needing live-polling like the AI
+    // dashboard's activity feed).
+    const searchInput = document.getElementById('searchInput');
+    function applyFilter() {
+      const q = searchInput.value.trim().toLowerCase();
+      document.querySelectorAll('.ui-string-row').forEach(function(row) {
+        const haystack = row.dataset.searchText || '';
+        row.style.display = (!q || haystack.includes(q)) ? '' : 'none';
+      });
+      // Hide a whole page-group panel if every row in it is filtered out, so search
+      // doesn't leave a stack of empty-looking section headers.
+      document.querySelectorAll('.ui-string-group').forEach(function(group) {
+        const visibleRows = group.querySelectorAll('.ui-string-row:not([style*="display: none"])');
+        group.style.display = visibleRows.length === 0 && q ? 'none' : '';
+      });
+    }
+    searchInput.addEventListener('input', applyFilter);
+    if (searchInput.value) applyFilter();
+  </script>
+</body>
+</html>

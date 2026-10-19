@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Templates — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../../partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Prompt Templates</h1>
+        <a href="/admin/ai/prompts/new" class="btn btn-primary">+ New Template</a>
+      </div>
+      <div class="admin-content">
+        <div id="tableContainer">
+          <p class="muted">Loading...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : String(str);
+      return div.innerHTML;
+    }
+
+    const container = document.getElementById('tableContainer');
+
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/admin/ai/api/prompts');
+        const data = await res.json();
+        if (!data.ok) throw new Error('Failed to load templates');
+
+        if (data.templates.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No prompt templates yet. Create one to start generating content.</p></div>';
+          return;
+        }
+
+        let html = '<table><thead><tr><th>Content Type</th><th>Name</th><th>Version</th><th>Status</th><th></th></tr></thead><tbody>';
+        data.templates.forEach(function(t) {
+          html += '<tr data-id="' + t.id + '">'
+            + '<td>' + escapeHtml(t.content_type) + '</td>'
+            + '<td>' + escapeHtml(t.name) + '</td>'
+            + '<td class="muted">v' + escapeHtml(t.version) + '</td>'
+            + '<td class="status-cell"><span class="pill pill-' + (t.is_active ? 'published' : 'draft') + '">' + (t.is_active ? 'Active' : 'Inactive') + '</span></td>'
+            + '<td>'
+            + '<div style="display:flex;gap:8px;">'
+            + '<a href="/admin/ai/prompts/' + t.id + '/edit" class="btn btn-outline btn-sm">Edit</a>'
+            + (t.is_active ? '' : '<button class="btn btn-outline btn-sm" data-action="activate" data-id="' + t.id + '">Restore</button>')
+            + '<button class="btn btn-danger btn-sm" data-action="delete" data-id="' + t.id + '">Delete</button>'
+            + '</div>'
+            + '</td>'
+            + '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+        wireUpActions();
+      } catch (err) {
+        container.innerHTML = '<div class="alert alert-error">Failed to load templates: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function wireUpActions() {
+      container.querySelectorAll('[data-action="activate"]').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          if (!confirm('Make this the active version for this content type?')) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch('/admin/ai/api/prompts/' + btn.dataset.id + '/activate', { method: 'POST' });
+            const data = await res.json();
+            if (data.ok) {
+              loadTemplates(); // reload the list in place, no navigation
+            } else {
+              alert('Failed to activate: ' + (data.error || 'unknown error'));
+              btn.disabled = false;
+            }
+          } catch (err) {
+            alert('Failed to activate: ' + err.message);
+            btn.disabled = false;
+          }
+        });
+      });
+
+      container.querySelectorAll('[data-action="delete"]').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          if (!confirm('Delete this template version permanently?')) return;
+          btn.disabled = true;
+          try {
+            const res = await fetch('/admin/ai/api/prompts/' + btn.dataset.id + '/delete', { method: 'POST' });
+            const data = await res.json();
+            if (data.ok) {
+              loadTemplates();
+            } else {
+              alert('Failed to delete: ' + (data.error || 'unknown error'));
+              btn.disabled = false;
+            }
+          } catch (err) {
+            alert('Failed to delete: ' + err.message);
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    loadTemplates();
+  </script>
+</body>
+</html>

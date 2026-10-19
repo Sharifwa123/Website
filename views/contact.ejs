@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head', {
+    pageTitle: 'Contact & Support',
+    pageDescription: 'Send a message to ' + settings.site_name + ' — questions, feedback or support requests, with an optional image attachment.',
+    canonicalUrl: siteUrl + '/contact'
+  }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <section id="main">
+    <div class="container" style="max-width:600px;">
+      <span class="eyebrow"><%= t('home.contact.eyebrow', "We're here to help") %></span>
+      <h1><%= t('home.contact.heading', 'Contact & Support') %></h1>
+      <div class="trace"></div>
+      <p class="muted" style="margin-bottom:24px;">
+        <%= t('contact.subtext', 'Questions, feedback, or an issue to report — send us a message below. You can attach one image (a screenshot, for example) if it helps explain your message.') %>
+      </p>
+
+      <div id="alertBox"></div>
+
+      <form id="contactForm" enctype="multipart/form-data">
+        <div class="field">
+          <label><%= t('home.contact.name_label', 'Your name') %></label>
+          <input type="text" name="name" required maxlength="120">
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.email_label', 'Your email') %></label>
+          <input type="email" name="email" required maxlength="160">
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.subject_label', 'Subject') %></label>
+          <input type="text" name="subject" maxlength="200" placeholder="<%= t('home.contact.subject_placeholder', 'What is this about?') %>">
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.message_label', 'Message') %></label>
+          <textarea name="body" required maxlength="5000" style="min-height:150px;font-family:'Inter';" placeholder="<%= t('home.contact.message_placeholder', "Tell us what's going on...") %>"></textarea>
+        </div>
+        <div class="field">
+          <label><%= t('home.contact.attach_label', 'Attach an image') %> <span class="muted">(<%= t('home.contact.attach_hint', 'optional, max 5MB') %>)</span></label>
+          <div class="file-drop" id="dropZone">
+            <div class="icon"><%- include('partials/icon', { name: 'upload', color: 'var(--text-soft)' }) %></div>
+            <div><%= t('home.contact.dropzone_text', 'Click to choose an image, or drag one here') %></div>
+            <div class="filename" id="filenameLabel"></div>
+          </div>
+          <input type="file" name="attachment" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn"><%= t('home.contact.submit_btn', 'Send Message') %></button>
+        <p class="muted" style="font-size:0.8rem;margin-top:12px;">
+          <%= t('home.contact.agree_prefix', 'By submitting this form, you agree to our') %> <a href="/privacy-policy"><%= t('home.contact.privacy_link', 'Privacy Policy') %></a> <%= t('home.contact.agree_and', 'and') %> <a href="/terms-of-service"><%= t('home.contact.terms_link', 'Terms of Service') %></a>.
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    const CONTACT_PAGE_SUBMIT_LABEL = <%- JSON.stringify(t('home.contact.submit_btn', 'Send Message')) %>;
+    const CONTACT_PAGE_SENDING_LABEL = <%- JSON.stringify(t('common.sending', 'Sending…')) %>;
+    const CONTACT_PAGE_GENERIC_ERROR = <%- JSON.stringify(t('common.generic_error', 'Something went wrong. Please try again.')) %>;
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const filenameLabel = document.getElementById('filenameLabel');
+    const form = document.getElementById('contactForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) filenameLabel.textContent = fileInput.files[0].name;
+    });
+    ['dragover', 'dragenter'].forEach(evt =>
+      dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach(evt =>
+      dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); })
+    );
+    dropZone.addEventListener('drop', e => {
+      if (e.dataTransfer.files[0]) {
+        fileInput.files = e.dataTransfer.files;
+        filenameLabel.textContent = e.dataTransfer.files[0].name;
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = CONTACT_PAGE_SENDING_LABEL;
+      alertBox.innerHTML = '';
+
+      const fd = new FormData(form);
+      try {
+        const res = await fetch('/api/contact', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.ok) {
+          alertBox.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+          form.reset();
+          filenameLabel.textContent = '';
+        } else {
+          alertBox.innerHTML = '<div class="alert alert-error">' + data.error + '</div>';
+        }
+      } catch (err) {
+        alertBox.innerHTML = '<div class="alert alert-error">' + CONTACT_PAGE_GENERIC_ERROR + '</div>';
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = CONTACT_PAGE_SUBMIT_LABEL;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<%
+  // Every page can override title/description/canonical/image/type by passing
+  // locals into this include (see post.ejs for an example) -- pages that don't
+  // fall back to sensible, still-unique-per-URL defaults below rather than a
+  // single generic title/description repeated site-wide.
+  const logoUrl = siteUrl + (settings.logo_path ? '/uploads/' + settings.logo_path : '/static/images/logo.png');
+  // A dedicated social-share image (not the logo -- a small square mark makes a
+  // poor link preview) used as the default whenever a page doesn't supply its
+  // own (e.g. a blog post's cover image via pageImage).
+  const defaultOgImage = siteUrl + '/static/images/og-image.jpg';
+  const fullTitle = typeof pageTitle !== 'undefined' ? pageTitle + ' — ' + settings.site_name : settings.site_name + ' — ' + settings.tagline;
+  const pageDesc = typeof pageDescription !== 'undefined' ? pageDescription : settings.about_html.replace(/<[^>]+>/g, '').trim().slice(0, 160);
+  const pageUrl = typeof canonicalUrl !== 'undefined' ? canonicalUrl : siteUrl + (typeof currentPath !== 'undefined' ? currentPath : '/');
+  const ogType = typeof pageOgType !== 'undefined' ? pageOgType : 'website';
+  const ogImage = typeof pageImage !== 'undefined' ? pageImage : defaultOgImage;
+%>
+<title><%= fullTitle %></title>
+<meta name="description" content="<%= pageDesc %>">
+<% if (typeof noIndex !== 'undefined' && noIndex) { %>
+<meta name="robots" content="noindex, follow">
+<% } %>
+<link rel="canonical" href="<%= pageUrl %>">
+<link rel="icon" href="<%= settings.logo_path ? '/uploads/' + settings.logo_path : '/static/images/logo.png' %>">
+<link rel="stylesheet" href="/static/css/main.css">
+
+<meta property="og:type" content="<%= ogType %>">
+<meta property="og:site_name" content="<%= settings.site_name %>">
+<meta property="og:title" content="<%= fullTitle %>">
+<meta property="og:description" content="<%= pageDesc %>">
+<meta property="og:url" content="<%= pageUrl %>">
+<meta property="og:image" content="<%= ogImage %>">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<%= fullTitle %>">
+<meta name="twitter:description" content="<%= pageDesc %>">
+<meta name="twitter:image" content="<%= ogImage %>">
+
+<script type="application/ld+json">
+<%- JSON.stringify(Object.assign({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": settings.site_name,
+  "url": siteUrl + "/",
+  "logo": logoUrl,
+  "description": settings.about_html.replace(/<[^>]+>/g, '').trim()
+}, (typeof socials !== 'undefined' && socials.length) ? { "sameAs": socials.map(function(s) { return s.url; }) } : {})) %>
+</script>
+<script type="application/ld+json">
+<%- JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": settings.site_name,
+  "url": siteUrl + "/"
+}) %>
+</script>
+<%
+// Color overrides set in Admin > Settings > Style -- fine-tuning within the
+// one SHARIF TECHNOLOGIES design system, not a theme switch. There is
+// deliberately only one visual identity site-wide (see :root in main.css);
+// the old light/refined/dark theme picker and heading-font picker were
+// removed so the site can't drift into an inconsistent look.
+%>
+<% if (settings.theme_primary || settings.theme_accent || settings.theme_ink) { %>
+<style>
+  :root {
+    <% if (settings.theme_primary) { %>--brand: <%= settings.theme_primary %>; --accent: <%= settings.theme_primary %>;<% } %>
+    <% if (settings.theme_accent) { %>--cyan: <%= settings.theme_accent %>;<% } %>
+    <% if (settings.theme_ink) { %>--ink: <%= settings.theme_ink %>;<% } %>
+  }
+</style>
+<% } %>
+
+<% if (settings.adsense_enabled === '1' && settings.adsense_client_id) { %>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= settings.adsense_client_id %>" crossorigin="anonymous"></script>
+<% } %>

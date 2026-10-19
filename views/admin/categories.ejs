@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Categories — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1>Categories</h1></div>
+      <div class="admin-content form-panel-width">
+        <div class="panel">
+          <h2>Add a category</h2>
+          <form method="POST" action="/admin/categories" style="display:flex;gap:10px;">
+            <input type="text" name="name" placeholder="e.g. Cloud Computing" required>
+            <button class="btn btn-primary">Add</button>
+          </form>
+        </div>
+
+        <p class="muted" style="margin:-4px 0 16px;">
+          A category doubles as a public "service" on the <a href="/services" target="_blank">/services page</a> when
+          "Show on Services page" is checked below. Uncheck it for categories (like Company News) that are just for
+          blog filtering, not a real service.
+        </p>
+
+        <% categories.forEach(function(c) { %>
+          <div class="panel">
+            <div class="row-between">
+              <div>
+                <div class="title"><%= c.name %></div>
+                <div class="sub"><%= c.post_count %> post<%= c.post_count === 1 ? '' : 's' %></div>
+              </div>
+              <form method="POST" action="/admin/categories/<%= c.id %>/delete" onsubmit="return confirm('Delete this category? Posts will be uncategorized, not deleted.');">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </div>
+            <form method="POST" action="/admin/categories/<%= c.id %>/update">
+              <div class="field" style="margin-top:12px;">
+                <label>Service description <span class="muted">(shown on /services)</span></label>
+                <textarea name="description" style="min-height:70px;"><%= c.description || '' %></textarea>
+              </div>
+              <div class="row-between" style="align-items:center;">
+                <div class="field" style="margin-bottom:0;">
+                  <label>Order on /services</label>
+                  <input type="number" name="sort_order" value="<%= c.sort_order %>" style="width:80px;">
+                </div>
+                <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;">
+                  <input type="checkbox" name="show_on_services" value="1" <%= c.show_on_services ? 'checked' : '' %>>
+                  Show on Services page
+                </label>
+                <button class="btn btn-outline btn-sm" type="submit">Save</button>
+              </div>
+            </form>
+          </div>
+        <% }); %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

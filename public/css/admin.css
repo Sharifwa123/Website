@@ -1,0 +1,123 @@
+/* Admin dashboard shell — reuses the design tokens from main.css but arranged
+   as a functional back-office layout: fixed sidebar + content area. */
+
+.admin-shell { display: flex; min-height: 100vh; }
+
+.admin-sidebar {
+  width: 240px;
+  background: var(--ink);
+  color: #fff;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.admin-sidebar .brand-mini {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.admin-sidebar .brand-mini img { width: 34px; height: 34px; border-radius: 50%; }
+.admin-sidebar .brand-mini span { font-family: var(--heading-font); font-weight: 600; font-size: 1.05rem; }
+
+.admin-nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+.admin-nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 9px;
+  color: rgba(255,255,255,0.72);
+  font-size: 0.9rem; font-weight: 500;
+  margin-bottom: 2px;
+}
+.admin-nav a:hover { background: rgba(255,255,255,0.06); text-decoration: none; color: #fff; }
+.admin-nav a.active { background: var(--accent); color: #fff; }
+.admin-nav .group-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); padding: 16px 14px 6px; }
+.admin-nav .badge-count {
+  margin-left: auto; background: var(--danger); color: #fff; font-size: 0.7rem;
+  padding: 1px 7px; border-radius: 999px; font-weight: 700;
+}
+
+.admin-sidebar .sidebar-footer { padding: 14px 20px 20px; border-top: 1px solid rgba(255,255,255,0.08); }
+.admin-sidebar .sidebar-footer a { color: rgba(255,255,255,0.6); font-size: 0.85rem; display: block; margin-bottom: 8px; }
+
+.admin-main { flex: 1; min-width: 0; }
+.admin-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px; background: #fff; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 10;
+}
+.admin-topbar h1 { font-size: 1.3rem; margin: 0; }
+/* 1100px left the content area visibly narrower than the sidebar left available
+   on anything wider than a laptop -- most admin pages (tables, forms, panels)
+   read fine wider than a text-reading column, so this uses more of the room
+   instead of floating in empty page. Any page that genuinely wants a narrower
+   reading column (long-form settings copy) sets its own max-width locally. */
+.admin-content { padding: 32px; max-width: 1400px; }
+
+/* A narrow single-column admin form (one input/textarea per row) used to cap
+   itself at 680px inline, regardless of how much wider .admin-content already
+   allowed -- leaving most of a normal desktop window empty. .form-panel-width
+   replaces that per-page inline max-width with one shared, wider value. */
+.form-panel-width { max-width: 960px; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 32px; }
+.stat-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
+.stat-card .num { font-family: var(--heading-font); font-size: 2rem; font-weight: 600; color: var(--ink); }
+.stat-card .label { font-size: 0.82rem; color: var(--text-soft); margin-top: 4px; }
+
+.panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+.panel h2 { font-size: 1.1rem; margin-bottom: 16px; }
+
+.login-shell {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--ink);
+}
+.login-card { background: #fff; border-radius: var(--radius-lg); padding: 40px; width: 100%; max-width: 400px; border: 1px solid var(--line); }
+.login-card .brand-mini { justify-content: center; margin-bottom: 20px; }
+.login-card .brand-mini img { width: 48px; height: 48px; border-radius: 50%; }
+
+.thumb-list { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.thumb-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.thumb-row:last-child { border-bottom: none; }
+.thumb-row .thumb-sq { width: 44px; height: 44px; border-radius: 9px; background: #eaf0ff; display: flex; align-items: center; justify-content: center; color: var(--brand); font-weight: 700; font-size: 0.7rem; flex-shrink: 0; }
+.thumb-row .title { font-weight: 600; font-size: 0.92rem; }
+.thumb-row .sub { font-size: 0.8rem; color: var(--text-soft); }
+.thumb-row .actions { margin-left: auto; display: flex; gap: 8px; }
+
+@media (max-width: 900px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-sidebar { position: fixed; left: -240px; z-index: 100; transition: left 0.2s; top: 0; height: 100vh; }
+  .admin-sidebar.open { left: 0; }
+  .admin-content { padding: 20px; }
+  .admin-nav-toggle { display: flex; }
+}
+
+.admin-nav-toggle {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.admin-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,38,0.5);
+  z-index: 99;
+}
+.admin-sidebar-overlay.open { display: block; }
+@media (max-width: 900px) {
+  .admin-topbar { padding-left: 60px; }
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= newsletter ? 'Edit Newsletter' : 'New Newsletter' %> — SharifTech Admin</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <%- include('../partials/sidebar', { active: 'newsletters' }) %>
+    <main class="admin-main">
+      <div class="admin-topbar"><h1><%= newsletter ? 'Edit Newsletter' : 'New Newsletter' %></h1></div>
+      <div class="admin-content form-panel-width">
+
+        <% if (newsletter && newsletter.status === 'sent') { %>
+          <div class="alert alert-success">
+            This newsletter was sent to <strong><%= newsletter.recipients %></strong> subscriber<%= newsletter.recipients === 1 ? '' : 's' %> on <%= new Date(newsletter.sent_at).toLocaleString() %>. It's now read-only.
+          </div>
+        <% } %>
+
+        <form method="POST" action="<%= newsletter ? '/admin/newsletters/' + newsletter.id + '/edit' : '/admin/newsletters' %>">
+          <div class="panel">
+            <div class="field">
+              <label>Subject line</label>
+              <input type="text" name="subject" required value="<%= newsletter ? newsletter.subject : '' %>" <%= newsletter && newsletter.status === 'sent' ? 'disabled' : '' %>>
+            </div>
+            <div class="field">
+              <label>Body <span class="muted">(HTML supported)</span></label>
+              <textarea name="body_html" style="min-height:300px;" <%= newsletter && newsletter.status === 'sent' ? 'disabled' : '' %>><%= newsletter ? newsletter.body_html : '' %></textarea>
+              <div class="hint">An unsubscribe link is automatically appended to the bottom when this is sent.</div>
+            </div>
+          </div>
+
+          <% if (!newsletter || newsletter.status !== 'sent') { %>
+            <button type="submit" class="btn btn-primary"><%= newsletter ? 'Save Draft' : 'Save as Draft' %></button>
+            <a href="/admin/newsletters" class="btn btn-outline">Cancel</a>
+          <% } %>
+        </form>
+
+        <% if (newsletter && newsletter.status !== 'sent') { %>
+          <div class="panel" style="margin-top:20px;border-color:#f3d98c;background:#fffaf0;">
+            <h2>Send this newsletter</h2>
+            <p class="muted">This will immediately email every confirmed subscriber. This can't be undone.</p>
+            <form method="POST" action="/admin/newsletters/<%= newsletter.id %>/send" onsubmit="return confirm('Send this newsletter to all confirmed subscribers now?');">
+              <button type="submit" class="btn btn-primary">📨 Send Now</button>
+            </form>
+          </div>
+        <% } %>
+
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', {
+    pageTitle: 'Copyright Notice',
+    pageDescription: 'Copyright ownership and permitted use of content published by ' + settings.site_name + '.',
+    canonicalUrl: siteUrl + '/copyright'
+  }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <section id="main">
+    <div class="container" style="max-width:760px;">
+      <span class="eyebrow">Legal</span>
+      <h1>Copyright Notice</h1>
+      <div class="trace"></div>
+      <p class="muted" style="margin-bottom:32px;">Last updated: <%= new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+
+      <div class="post-body">
+
+        <p>&copy; <%= new Date().getFullYear() %> <strong><%= settings.site_name %></strong>. All rights reserved.</p>
+
+        <h2>1. Ownership of Content</h2>
+        <p>Unless otherwise stated, all content published on this website, including but not limited to text, articles, blog posts, graphics, logos, icons, images, and the overall design, layout, and "look and feel" of the Site, is the property of <%= settings.site_name %> and is protected under applicable copyright, trademark, and intellectual property laws, including the Copyright Act, 2005 (Act 690) of the Republic of Ghana, and applicable international treaties.</p>
+
+        <h2>2. Trademarks</h2>
+        <p>The name "<%= settings.site_name %>," our logo, and any associated brand marks displayed on this Site are trademarks of <%= settings.site_name %>. These marks may not be used, reproduced, or imitated, in whole or in part, without our prior written consent.</p>
+
+        <h2>3. Permitted Use</h2>
+        <p>You may view, download, and print content from this Site solely for your own personal, non-commercial use, provided that you do not modify or remove any copyright, trademark, or other proprietary notices. No other use is permitted without our prior written consent.</p>
+
+        <h2>4. Prohibited Use</h2>
+        <p>Without our prior written consent, you may not:</p>
+        <ul>
+          <li>Reproduce, republish, distribute, or publicly display any content from this Site on another website, platform, or medium;</li>
+          <li>Modify, adapt, or create derivative works based on content from this Site;</li>
+          <li>Use any content from this Site for commercial purposes;</li>
+          <li>Remove, obscure, or alter any copyright, trademark, or other proprietary notice appearing on the Site.</li>
+        </ul>
+
+        <h2>5. Third-Party Content</h2>
+        <p>Where this Site references, links to, or displays content originating from third parties, all rights in such content remain with the respective owners. Inclusion of such content does not constitute a claim of ownership by <%= settings.site_name %>.</p>
+
+        <h2>6. Reporting Infringement</h2>
+        <p>If you believe that content on this Site infringes your copyright or other intellectual property rights, please contact us with sufficient detail to identify the material in question, including its location on the Site, and a description of the right you believe has been infringed. We will review and respond to legitimate notices in good faith.</p>
+        <p>
+          <strong><%= settings.site_name %></strong><br>
+          Email: <a href="mailto:<%= settings.contact_email %>"><%= settings.contact_email %></a><br>
+          Phone: <%= settings.contact_phone %><br>
+          Location: <%= settings.contact_location %>
+        </p>
+
+        <h2>7. Changes to This Notice</h2>
+        <p>We reserve the right to update this Copyright Notice at any time. The "Last updated" date at the top of this page reflects the most recent revision.</p>
+
+      </div>
+    </div>
+  </section>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>
